@@ -85,6 +85,7 @@ void init_screen(const char * caption) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glEnableClientState(GL_VERTEX_ARRAY);
+    glDepthFunc(GL_LEQUAL);
 
     // Frustum
     glMatrixMode(GL_PROJECTION);

@@ -8,7 +8,7 @@
 int main (int argc, char *argv[]) {
     init_screen("blockgame");  
     
-    load_scene("../maps/lvl_0000.blm");
+    load_scene("../maps/lvl_0001.blm");
     
     // mainloop
     while (!quit) {

@@ -43,9 +43,11 @@ struct block_collision {
 static const double PLAYER_SIZE = 0.4; 
 static const double PLAYER_HEIGHT = 0.6;
 static const int GRID_SIZE = 1023;
+static const double COLLISION_EPSILON = 0.002;
 static point3s grid[GRID_SIZE * 4];
 static point3fc * block_coords;
-static unsigned short * block_indices;
+static unsigned short * block_face_indices;
+static unsigned short * block_wire_indices;
 static block_collision * block_collisions;
 static point3f * collision_nodes;
 static unsigned int blocks;
@@ -68,6 +70,15 @@ int face_indices[] = {
     0, 2, 6, 4,
     1, 3, 7, 5,
 };
+int wire_indices[] = {
+    0,1,0,2,0,4,
+    1,3,1,5,
+    2,3,2,6,
+    3,7,
+    4,5,4,6,
+    5,7,
+    6,7,
+};
 
 #define SET_SIZE(a, size) do{delete[] a; typedef typeof(*a) T; a=new T[size];}while(0)
 
@@ -83,12 +94,14 @@ void load_scene(const char * file) {
     filemap<block> blockfile(file);
     blocks = blockfile.length;
     SET_SIZE(block_coords, blocks*8);
-    SET_SIZE(block_indices, blocks*24);
+    SET_SIZE(block_face_indices, blocks*24);
+    SET_SIZE(block_wire_indices, blocks*24);
     SET_SIZE(block_collisions, blocks);
     SET_SIZE(collision_nodes, blocks);
     for (uint i=0; i<blocks; i++) {
         for (uint j=0; j<24; j++) {
-            block_indices[i*24+j] = face_indices[j] + i*8;
+            block_face_indices[i*24+j] = face_indices[j] + i*8;
+            block_wire_indices[i*24+j] = wire_indices[j] + i*8;
         }
         const block &b = blockfile.list[i];
         double sizey = b.top/2;
@@ -98,8 +111,8 @@ void load_scene(const char * file) {
         glm::dvec3 size = glm::dvec3(b.sizex, sizey, b.sizez);
         glm::dvec3 r_pos = glm::transpose(rotation)*pos;
         block_collisions[i].rotation = rotation;
-        block_collisions[i].lb = r_pos-size-0.001;
-        block_collisions[i].ub = r_pos+size+0.001;
+        block_collisions[i].lb = r_pos-size-COLLISION_EPSILON;
+        block_collisions[i].ub = r_pos+size+COLLISION_EPSILON;
         for (uint j=0; j<8; j++) {
             glm::dvec3 coord = rotation*(cube_coords[j]*size) + pos;
             block_coords[i*8+j].x = coord.x;
@@ -112,23 +125,36 @@ void load_scene(const char * file) {
 }
 
 void draw() {
+    // Grid
     glColor4f(0,1,0, 0.3);
     glVertexPointer(3,GL_SHORT,sizeof(*grid),grid);
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
+    glLineWidth(1);
     glDrawArrays(GL_LINES, 0, GRID_SIZE*4);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     
+    // Blocks
     glEnableClientState(GL_COLOR_ARRAY);
     glVertexPointer(3,GL_FLOAT,sizeof(*block_coords),&block_coords->x);
     glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*block_coords),&block_coords->color);
-    glDrawElements(GL_QUADS, blocks*24, GL_UNSIGNED_SHORT, block_indices);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(2,2);
+    glDrawElements(GL_QUADS, blocks*24, GL_UNSIGNED_SHORT, block_face_indices);
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glDisableClientState(GL_COLOR_ARRAY);
+    glColor3f(0,0,0);
+    glLineWidth(2);
+    glDrawElements(GL_LINES, blocks*24, GL_UNSIGNED_SHORT, block_wire_indices);
 
-    glColor3f(1,0,0);
-    glPointSize(5.0);
+    // Collision markers
     glVertexPointer(3,GL_FLOAT,sizeof(*collision_nodes),collision_nodes);
+    glColor3f(0,0,0);
+    glPointSize(5.0);
+    glDrawArrays(GL_POINTS, 0, blocks);
+    glColor3f(1,1,1);
+    glPointSize(3.0);
     glDrawArrays(GL_POINTS, 0, blocks);
 }
 
@@ -149,7 +175,7 @@ void interact() {
             d = sqrt(d);
             dist /= d;
             // Move out of cube
-            position -= dist*(PLAYER_SIZE-d-1e-3);
+            position -= dist*(PLAYER_SIZE-d-COLLISION_EPSILON);
             // Fix velocity.
             velocity -= dist*glm::dot(dist, velocity);
             // Walking?
