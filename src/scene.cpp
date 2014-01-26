@@ -141,6 +141,7 @@ void load_scene(const char * file) {
     tau=0;
     phi=0;
     gem_taken = false;
+    end_counter = END_DURATION;
     
     filemap<block> blockfile(file);
     blocks = blockfile.length;
@@ -251,7 +252,7 @@ void draw() {
     draw_blocks();
     draw_collision_markers();
     if (!gem_taken) draw_gem();
-    else draw_end_fade();
+    if (end_counter>0) draw_end_fade();
 }
 
 void interact() {
@@ -300,6 +301,7 @@ void interact() {
         if (glm::dot(gem_dist,gem_dist) < PLAYER_SIZE*PLAYER_SIZE) {
             gem_taken = true;
         }
-        end_counter = 0;
+        if (end_counter>0)
+            end_counter--;
     }
 }
