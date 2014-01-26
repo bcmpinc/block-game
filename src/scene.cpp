@@ -41,7 +41,6 @@ struct block_collision {
 };
 
 static const double PLAYER_SIZE = 0.4; 
-static const double PLAYER_HEIGHT = 0.6;
 static const int GRID_SIZE = 1023;
 static const double COLLISION_EPSILON = 0.002;
 static point3s grid[GRID_SIZE * 4];
@@ -51,6 +50,8 @@ static unsigned short * block_wire_indices;
 static block_collision * block_collisions;
 static point3f * collision_nodes;
 static unsigned int blocks;
+static glm::dvec3 gem_location;
+static double gem_rotation;
 
 glm::dvec3 cube_coords[] = {
     glm::dvec3(-1,-1,-1),
@@ -62,15 +63,15 @@ glm::dvec3 cube_coords[] = {
     glm::dvec3( 1, 1,-1),
     glm::dvec3( 1, 1, 1),
 };
-int face_indices[] = {
-    0, 1, 3, 2,
+short face_indices[] = {
+    1, 0, 2, 3,
     4, 5, 7, 6,
     0, 1, 5, 4, 
-    2, 3, 7, 6, 
-    0, 2, 6, 4,
+    3, 2, 6, 7, 
+    2, 0, 4, 6,
     1, 3, 7, 5,
 };
-int wire_indices[] = {
+short wire_indices[] = {
     0,1,0,2,0,4,
     1,3,1,5,
     2,3,2,6,
@@ -80,6 +81,25 @@ int wire_indices[] = {
     6,7,
 };
 
+point3f gem_coords[] = {
+    {  0, .2,  0},
+    {-.1,  0,  0},
+    {  0,  0,-.1},
+    { .1,  0,  0},
+    {  0,  0, .1},
+    {  0,-.2,  0},
+};
+short gem_face_indices[] = {
+    0, 1, 2, 2, 1, 5,
+    0, 2, 3, 3, 2, 5,
+    0, 3, 4, 4, 3, 5,
+    0, 4, 1, 1, 4, 5,
+};
+short gem_wire_indices[] = {
+    0,1,0,2,0,3,0,4,
+    1,2,2,3,3,4,4,1,
+    1,5,2,5,3,5,4,5,
+};
 #define SET_SIZE(a, size) do{delete[] a; typedef typeof(*a) T; a=new T[size];}while(0)
 
 void load_scene(const char * file) {
@@ -89,7 +109,7 @@ void load_scene(const char * file) {
         grid[4*i+2]={(short)(i-GRID_SIZE/2),0,-GRID_SIZE/2};
         grid[4*i+3]={(short)(i-GRID_SIZE/2),0, GRID_SIZE/2};
     }
-    position = glm::dvec3(0, PLAYER_HEIGHT, 0);
+    position = glm::dvec3(0, PLAYER_SIZE, 0);
     
     filemap<block> blockfile(file);
     blocks = blockfile.length;
@@ -118,9 +138,10 @@ void load_scene(const char * file) {
             block_coords[i*8+j].x = coord.x;
             block_coords[i*8+j].y = coord.y;
             block_coords[i*8+j].z = coord.z;
-            block_coords[i*8+j].color = ((b.color>>16)&0xff) | (b.color&0xff00) | ((b.color&0xff)<<16);
+            block_coords[i*8+j].color = 0xff000000 | ((b.color>>16)&0xff) | (b.color&0xff00) | ((b.color&0xff)<<16);
         }
-        printf("%6.3f %6.3f %6.3f %06x\n", b.posx, posy, b.posz, b.color);
+        // printf("%6.3f %6.3f %6.3f %06x\n", b.posx, posy, b.posz, b.color);
+        if (i==0) gem_location = pos + glm::dvec3(0,sizey+PLAYER_SIZE,0);
     }
 }
 
@@ -156,6 +177,23 @@ void draw() {
     glColor3f(1,1,1);
     glPointSize(3.0);
     glDrawArrays(GL_POINTS, 0, blocks);
+    
+    // End marker
+    glPushMatrix();
+    glTranslated(gem_location.x, gem_location.y, gem_location.z);
+    glRotated(gem_rotation,0,1,0);
+    glVertexPointer(3,GL_FLOAT,sizeof(*gem_coords),gem_coords);
+    glColor3f(0,1,1);
+    glLineWidth(1);
+    glDrawElements(GL_LINES, 24, GL_UNSIGNED_SHORT, gem_wire_indices);
+    glEnable(GL_BLEND);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glColor4f(0,1,1,0.5);
+    glPolygonOffset(2,2);
+    glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, gem_face_indices);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_BLEND);
+    glPopMatrix();
 }
 
 void interact() {
@@ -186,9 +224,12 @@ void interact() {
     }
 
     // Ground collision.
-    if (position.y <= PLAYER_HEIGHT + 1e-3) {
-        position.y = PLAYER_HEIGHT;
+    if (position.y <= PLAYER_SIZE + 1e-3) {
+        position.y = PLAYER_SIZE;
         velocity.y = 0;
         airborne = false;
     }
+    
+    // Animations
+    gem_rotation += 5;
 }

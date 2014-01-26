@@ -40,8 +40,8 @@ namespace {
 
     // Constants
     const double ROTATE_SPEED =  0.01;
-    const double MOVE_SPEED = .15;
-    const double JUMP_SPEED = .5;
+    const double MOVE_SPEED = 0.15;
+    const double JUMP_SPEED = 0.4;
     const int MILLISECONDS_PER_FRAME = 33;
     const double GROUND_CONTROL = 0.3;
     const double AIR_CONTROL = 0.05;

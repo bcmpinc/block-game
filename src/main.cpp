@@ -13,14 +13,12 @@ int main (int argc, char *argv[]) {
     // mainloop
     while (!quit) {
         Timer t;
-        if (moves) {
-            interact();
-            clear_screen();
-            set_matrix();
-            draw();
-            flip_screen();
-            printf("%c %6.3f %6.3f %6.3f\n", airborne?'A':'W', position.x, position.y, position.z);
-        }
+        interact();
+        clear_screen();
+        set_matrix();
+        draw();
+        flip_screen();
+        //printf("%c %6.3f %6.3f %6.3f\n", airborne?'A':'W', position.x, position.y, position.z);
         next_frame(t.elapsed());
         handle_events();
     }

@@ -84,6 +84,7 @@ void init_screen(const char * caption) {
     glEnable(GL_COLOR);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    glEnable(GL_CULL_FACE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glDepthFunc(GL_LEQUAL);
 
