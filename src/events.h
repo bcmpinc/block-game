@@ -22,6 +22,7 @@
 
 void handle_events();
 void next_frame(int elapsed);
+void reset(glm::dvec3 start_position);
 
 extern bool quit;
 extern bool moves;
@@ -29,6 +30,5 @@ extern bool airborne;
 extern glm::dmat3 orientation;
 extern glm::dvec3 position;
 extern glm::dvec3 velocity;
-extern double tau, phi;
 
 #endif

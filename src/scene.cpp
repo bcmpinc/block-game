@@ -135,11 +135,7 @@ void load_scene(const char * file) {
         grid[4*i+2]={(short)(i-GRID_SIZE/2),0,-GRID_SIZE/2};
         grid[4*i+3]={(short)(i-GRID_SIZE/2),0, GRID_SIZE/2};
     }
-    position = glm::dvec3(0, PLAYER_SIZE, 0);
-    velocity = glm::dvec3(0,0,0);
-    airborne = false;
-    tau=0;
-    phi=0;
+    reset(glm::dvec3(0, PLAYER_SIZE, 0));
     gem_taken = false;
     end_counter = END_DURATION;
     
