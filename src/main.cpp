@@ -6,13 +6,18 @@
 #include "scene.h"
 
 int main (int argc, char *argv[]) {
+    int map_current=-1;
     init_screen("blockgame");  
     
-    load_scene("../maps/lvl_0001.blm");
-    
     // mainloop
-    while (!quit) {
+    while (!quit && map_next<=8) {
         Timer t;
+        if (map_current != map_next) {
+            char file[40];
+            snprintf(file, 40, "../maps/lvl_%04d.blm", map_next);
+            load_scene(file);
+            map_current = map_next;
+        }
         interact();
         clear_screen();
         set_matrix();

@@ -34,6 +34,8 @@
 #include "events.h"
 #include "art.h"
 
+static const glm::dvec3 CAMERA_OFFSET(0,0.2,0);
+
 using glm::min;
 using glm::max;
 
@@ -65,6 +67,8 @@ void init_screen(const char * caption) {
     SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4);
     // TODO: include SDL_RESIZABLE flag
     screen = SDL_SetVideoMode (SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_OPENGL | (SCREEN_FULLSCREEN*SDL_FULLSCREEN));
     if (screen == NULL) {
@@ -85,6 +89,7 @@ void init_screen(const char * caption) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_MULTISAMPLE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glDepthFunc(GL_LEQUAL);
 
@@ -110,7 +115,7 @@ void clear_screen() {
 }
 
 void set_matrix() {
-    glm::dmat4 view = glm::translate(glm::dmat4(orientation),-position);
+    glm::dmat4 view = glm::translate(glm::dmat4(orientation),-position-CAMERA_OFFSET);
     glLoadMatrixd(glm::value_ptr(view));
 }
 

@@ -33,23 +33,16 @@ class button {
     };
 };
 
-namespace {
-    // Quiting?
-    bool button_state[button::STATES];
-    bool mousemove=false;
+static const double ROTATE_SPEED =  0.01;
+static const double MOVE_SPEED = 0.15;
+static const double JUMP_SPEED = 0.4;
+static const int MILLISECONDS_PER_FRAME = 33;
+static const double GROUND_CONTROL = 0.3;
+static const double AIR_CONTROL = 0.05;
+static const glm::dvec3 GRAVITY(0,-0.02,0);
 
-    // Constants
-    const double ROTATE_SPEED =  0.01;
-    const double MOVE_SPEED = 0.15;
-    const double JUMP_SPEED = 0.4;
-    const int MILLISECONDS_PER_FRAME = 33;
-    const double GROUND_CONTROL = 0.3;
-    const double AIR_CONTROL = 0.05;
-    const glm::dvec3 GRAVITY(0,-0.02,0);
-    
-    // Movement
-    double tau=0, phi=0;
-}
+static bool button_state[button::STATES];
+static bool mousemove=false;
 
 bool airborne = false;
 bool quit  = false;
@@ -57,6 +50,7 @@ bool moves = true;
 glm::dmat3 orientation;
 glm::dvec3 position;
 glm::dvec3 velocity;
+double tau=0, phi=0;
 
 // checks user input
 void handle_events() {

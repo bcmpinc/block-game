@@ -29,5 +29,6 @@ extern bool airborne;
 extern glm::dmat3 orientation;
 extern glm::dvec3 position;
 extern glm::dvec3 velocity;
+extern double tau, phi;
 
 #endif

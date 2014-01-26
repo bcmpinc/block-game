@@ -19,6 +19,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+extern int map_next;
 void load_scene(const char* file);
 void draw();
 void interact();

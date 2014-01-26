@@ -10,17 +10,34 @@
 #include "events.h"
 #include "filemap.h"
 
+struct point2s {
+    short x,y;
+    void attach() {
+        glVertexPointer(2,GL_SHORT,sizeof(*this),this);
+    }
+};
+
 struct point3s {
     short x,y,z;
+    void attach() {
+        glVertexPointer(3,GL_SHORT,sizeof(*this),this);
+    }
 };
 
 struct point3f {
     float x,y,z;
+    void attach() {
+        glVertexPointer(3,GL_FLOAT,sizeof(*this),this);
+    }
 };
 
 struct point3fc {
     float x,y,z;
     uint32_t color;
+    void attach() {
+        glVertexPointer(3,GL_FLOAT,sizeof(*this),&this->x);
+        glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*this),&this->color);
+    }
 };
 
 struct block {
@@ -43,6 +60,8 @@ struct block_collision {
 static const double PLAYER_SIZE = 0.4; 
 static const int GRID_SIZE = 1023;
 static const double COLLISION_EPSILON = 0.002;
+static const int END_DURATION = 60;
+
 static point3s grid[GRID_SIZE * 4];
 static point3fc * block_coords;
 static unsigned short * block_face_indices;
@@ -52,8 +71,12 @@ static point3f * collision_nodes;
 static unsigned int blocks;
 static glm::dvec3 gem_location;
 static double gem_rotation;
+static bool gem_taken;
+static int end_counter;
 
-glm::dvec3 cube_coords[] = {
+int map_next=0;
+
+static glm::dvec3 cube_coords[] = {
     glm::dvec3(-1,-1,-1),
     glm::dvec3(-1,-1, 1),
     glm::dvec3(-1, 1,-1),
@@ -63,7 +86,7 @@ glm::dvec3 cube_coords[] = {
     glm::dvec3( 1, 1,-1),
     glm::dvec3( 1, 1, 1),
 };
-short face_indices[] = {
+static short face_indices[] = {
     1, 0, 2, 3,
     4, 5, 7, 6,
     0, 1, 5, 4, 
@@ -71,7 +94,7 @@ short face_indices[] = {
     2, 0, 4, 6,
     1, 3, 7, 5,
 };
-short wire_indices[] = {
+static short wire_indices[] = {
     0,1,0,2,0,4,
     1,3,1,5,
     2,3,2,6,
@@ -81,7 +104,7 @@ short wire_indices[] = {
     6,7,
 };
 
-point3f gem_coords[] = {
+static point3f gem_coords[] = {
     {  0, .2,  0},
     {-.1,  0,  0},
     {  0,  0,-.1},
@@ -89,16 +112,19 @@ point3f gem_coords[] = {
     {  0,  0, .1},
     {  0,-.2,  0},
 };
-short gem_face_indices[] = {
+static short gem_face_indices[] = {
     0, 1, 2, 2, 1, 5,
     0, 2, 3, 3, 2, 5,
     0, 3, 4, 4, 3, 5,
     0, 4, 1, 1, 4, 5,
 };
-short gem_wire_indices[] = {
+static short gem_wire_indices[] = {
     0,1,0,2,0,3,0,4,
     1,2,2,3,3,4,4,1,
     1,5,2,5,3,5,4,5,
+};
+static point2s fade_coords[]= {
+    {-1,-1},{1,-1},{1,1},{-1,1},  
 };
 #define SET_SIZE(a, size) do{delete[] a; typedef typeof(*a) T; a=new T[size];}while(0)
 
@@ -110,6 +136,11 @@ void load_scene(const char * file) {
         grid[4*i+3]={(short)(i-GRID_SIZE/2),0, GRID_SIZE/2};
     }
     position = glm::dvec3(0, PLAYER_SIZE, 0);
+    velocity = glm::dvec3(0,0,0);
+    airborne = false;
+    tau=0;
+    phi=0;
+    gem_taken = false;
     
     filemap<block> blockfile(file);
     blocks = blockfile.length;
@@ -145,55 +176,82 @@ void load_scene(const char * file) {
     }
 }
 
-void draw() {
-    // Grid
+static void draw_grid() {
+    grid->attach();
     glColor4f(0,1,0, 0.3);
-    glVertexPointer(3,GL_SHORT,sizeof(*grid),grid);
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glLineWidth(1);
     glDrawArrays(GL_LINES, 0, GRID_SIZE*4);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    
-    // Blocks
+}
+
+static void draw_blocks() {
+    block_coords->attach();
     glEnableClientState(GL_COLOR_ARRAY);
-    glVertexPointer(3,GL_FLOAT,sizeof(*block_coords),&block_coords->x);
-    glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*block_coords),&block_coords->color);
     glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(2,2);
+    glPolygonOffset(1,1);
     glDrawElements(GL_QUADS, blocks*24, GL_UNSIGNED_SHORT, block_face_indices);
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisableClientState(GL_COLOR_ARRAY);
     glColor3f(0,0,0);
     glLineWidth(2);
     glDrawElements(GL_LINES, blocks*24, GL_UNSIGNED_SHORT, block_wire_indices);
+}
 
-    // Collision markers
-    glVertexPointer(3,GL_FLOAT,sizeof(*collision_nodes),collision_nodes);
+static void draw_collision_markers() {
+    collision_nodes->attach();
     glColor3f(0,0,0);
     glPointSize(5.0);
     glDrawArrays(GL_POINTS, 0, blocks);
     glColor3f(1,1,1);
-    glPointSize(3.0);
+    glPointSize(2.0);
     glDrawArrays(GL_POINTS, 0, blocks);
-    
-    // End marker
+}
+
+static void draw_gem() {
+    gem_coords->attach();
     glPushMatrix();
     glTranslated(gem_location.x, gem_location.y, gem_location.z);
     glRotated(gem_rotation,0,1,0);
-    glVertexPointer(3,GL_FLOAT,sizeof(*gem_coords),gem_coords);
     glColor3f(0,1,1);
     glLineWidth(1);
     glDrawElements(GL_LINES, 24, GL_UNSIGNED_SHORT, gem_wire_indices);
     glEnable(GL_BLEND);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glColor4f(0,1,1,0.5);
-    glPolygonOffset(2,2);
+    glPolygonOffset(1,1);
     glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, gem_face_indices);
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_BLEND);
     glPopMatrix();
+}
+
+static void draw_end_fade() {
+    fade_coords->attach();
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glColor4f(0,0,0,end_counter/(float)END_DURATION);
+    glDrawArrays(GL_QUADS, 0, 4);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void draw() {
+    draw_grid();
+    draw_blocks();
+    draw_collision_markers();
+    if (!gem_taken) draw_gem();
+    else draw_end_fade();
 }
 
 void interact() {
@@ -230,6 +288,18 @@ void interact() {
         airborne = false;
     }
     
-    // Animations
-    gem_rotation += 5;
+    // Gem
+    if (gem_taken) {
+        end_counter++;
+        if (end_counter>=END_DURATION){
+            map_next++;
+        }
+    } else {
+        gem_rotation += 5;
+        glm::dvec3 gem_dist = gem_location - position;
+        if (glm::dot(gem_dist,gem_dist) < PLAYER_SIZE*PLAYER_SIZE) {
+            gem_taken = true;
+        }
+        end_counter = 0;
+    }
 }
