@@ -1,5 +1,5 @@
 /*
-    Voxel-Engine - A CPU based sparse octree renderer.
+    Block Game - A minimalistic 3D platform game
     Copyright (C) 2013  B.J. Conijn <bcmpinc@users.sourceforge.net>
 
     This program is free software: you can redistribute it and/or modify

@@ -1,3 +1,21 @@
+/*
+    Block Game - A minimalistic 3D platform game
+    Copyright (C) 2014  B.J. Conijn <bcmpinc@users.sourceforge.net>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <cstdint>
 #include <vector>
 #include <GL/gl.h>
@@ -9,36 +27,7 @@
 #include "scene.h"
 #include "events.h"
 #include "filemap.h"
-
-struct point2s {
-    short x,y;
-    void attach() {
-        glVertexPointer(2,GL_SHORT,sizeof(*this),this);
-    }
-};
-
-struct point3s {
-    short x,y,z;
-    void attach() {
-        glVertexPointer(3,GL_SHORT,sizeof(*this),this);
-    }
-};
-
-struct point3f {
-    float x,y,z;
-    void attach() {
-        glVertexPointer(3,GL_FLOAT,sizeof(*this),this);
-    }
-};
-
-struct point3fc {
-    float x,y,z;
-    uint32_t color;
-    void attach() {
-        glVertexPointer(3,GL_FLOAT,sizeof(*this),&this->x);
-        glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*this),&this->color);
-    }
-};
+#include "point_types.h"
 
 struct block {
     float posz;
@@ -73,6 +62,8 @@ static glm::dvec3 gem_location;
 static double gem_rotation;
 static bool gem_taken;
 static int end_counter;
+static filemap<point3f> enemy;
+static char rec_filename[512];
 
 int map_next=0;
 
@@ -128,6 +119,10 @@ static point2s fade_coords[]= {
 };
 #define SET_SIZE(a, size) do{delete[] a; typedef typeof(*a) T; a=new T[size];}while(0)
 
+static bool not_yet_lost() {
+   return enemy.fd==-1 || enemy.length>move_counter+8;   
+}
+
 void load_scene(const char * file) {
     for (int i=0; i<GRID_SIZE; i++) {
         grid[4*i+0]={-GRID_SIZE/2,0,(short)(i-GRID_SIZE/2)};
@@ -171,6 +166,9 @@ void load_scene(const char * file) {
         // printf("%6.3f %6.3f %6.3f %06x\n", b.posx, posy, b.posz, b.color);
         if (i==0) gem_location = pos + glm::dvec3(0,sizey+PLAYER_SIZE,0);
     }
+    
+    snprintf(rec_filename, sizeof(rec_filename), "%s.rec", file);
+    enemy = filemap<point3f>(rec_filename);
 }
 
 static void draw_grid() {
@@ -212,17 +210,29 @@ static void draw_gem() {
     glPushMatrix();
     glTranslated(gem_location.x, gem_location.y, gem_location.z);
     glRotated(gem_rotation,0,1,0);
-    glColor3f(0,1,1);
+    if (not_yet_lost()) glColor3f(0,1,1);
+    else glColor3f(1,0,0);
     glLineWidth(1);
     glDrawElements(GL_LINES, 24, GL_UNSIGNED_SHORT, gem_wire_indices);
     glEnable(GL_BLEND);
     glEnable(GL_POLYGON_OFFSET_FILL);
-    glColor4f(0,1,1,0.5);
+    if (not_yet_lost()) glColor4f(0,1,1,0.5);
+    else glColor4f(1,0,0,0.5);
     glPolygonOffset(1,1);
     glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, gem_face_indices);
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_BLEND);
     glPopMatrix();
+}
+
+static void draw_enemy() {
+    enemy.list->attach();
+    glLineWidth(3);
+    if (not_yet_lost()) glColor4f(0,1,1,0.5);
+    else glColor4f(1,0,0,0.5);
+    glEnable(GL_BLEND);
+    glDrawArrays(GL_LINE_STRIP, 0, std::min(move_counter, enemy.length));
+    glDisable(GL_BLEND);
 }
 
 static void draw_end_fade() {
@@ -248,6 +258,7 @@ void draw() {
     draw_blocks();
     draw_collision_markers();
     if (!gem_taken) draw_gem();
+    draw_enemy();
     if (end_counter>0) draw_end_fade();
 }
 
@@ -296,8 +307,14 @@ void interact() {
         glm::dvec3 gem_dist = gem_location - position;
         if (glm::dot(gem_dist,gem_dist) < PLAYER_SIZE*PLAYER_SIZE) {
             gem_taken = true;
-        }
-        if (end_counter>0)
+            // printf("end: %d %d %d\n", enemy.fd, enemy.length, move_counter+8);
+            if (not_yet_lost()) {
+                finish(gem_location, rec_filename);
+            }
+        } else if (end_counter>0) {
             end_counter--;
+        }
     }
+    
+    // Recording
 }

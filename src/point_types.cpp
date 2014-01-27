@@ -1,6 +1,6 @@
 /*
     Block Game - A minimalistic 3D platform game
-    Copyright (C) 2013,2014  B.J. Conijn <bcmpinc@users.sourceforge.net>
+    Copyright (C) 2014  B.J. Conijn <bcmpinc@users.sourceforge.net>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,20 +16,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EVENTS_H
-#define EVENTS_H
-#include <glm/glm.hpp>
+#include <GL/gl.h>
+#include "point_types.h"
 
-void handle_events();
-void next_frame(int elapsed);
-void reset(glm::dvec3 start_position);
-void finish(glm::dvec3 end_position, const char * target_file);
+void point2s::attach() const {
+    glVertexPointer(2,GL_SHORT,sizeof(*this),this);
+}
 
-extern bool quit;
-extern bool airborne;
-extern glm::dmat3 orientation;
-extern glm::dvec3 position;
-extern glm::dvec3 velocity;
-extern uint move_counter;
+void point3s::attach() const {
+    glVertexPointer(3,GL_SHORT,sizeof(*this),this);
+}
 
-#endif
+void point3f::attach() const {
+    glVertexPointer(3,GL_FLOAT,sizeof(*this),this);
+}
+
+void point3fc::attach() const {
+    glVertexPointer(3,GL_FLOAT,sizeof(*this),&this->x);
+    glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*this),&this->color);
+}

@@ -12,6 +12,7 @@ set(blockgame_src
     src/events.cpp
     src/timing.cpp
     src/scene.cpp
+    src/point_types.cpp
 )
 
 include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})

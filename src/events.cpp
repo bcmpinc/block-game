@@ -1,6 +1,6 @@
 /*
-    Voxel-Engine - A CPU based sparse octree renderer.
-    Copyright (C) 2013  B.J. Conijn <bcmpinc@users.sourceforge.net>
+    Block Game - A minimalistic 3D platform game
+    Copyright (C) 2013,2014  B.J. Conijn <bcmpinc@users.sourceforge.net>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,8 +19,12 @@
 #define GLM_FORCE_RADIANS 
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL/SDL.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "events.h"
+#include "point_types.h"
+
 
 // Buttons
 class button {
@@ -41,20 +45,29 @@ static const double GROUND_CONTROL = 0.3;
 static const double AIR_CONTROL = 0.05;
 static const glm::dvec3 GRAVITY(0,-0.02,0);
 static const int HISTORY = 1024;
+static const char * TEMP_FILENAME = "temp.rec";
 
 static bool button_state[button::STATES];
 static bool mousemove=false;
 static glm::dvec3 old_position[HISTORY];
 static glm::dvec3 old_velocity[HISTORY];
 static int history_base_index, history_cur_index;
+static double tau=0, phi=0;
+static int motion_fd = -1;
 
 bool airborne = false;
 bool quit  = false;
-bool moves = true;
 glm::dmat3 orientation;
 glm::dvec3 position;
 glm::dvec3 velocity;
-double tau=0, phi=0;
+uint move_counter;
+
+void write_point(glm::dvec3 p) {
+    if (motion_fd!=-1) {
+        point3f pt = {(float)p.x,(float)p.y,(float)p.z};
+        write(motion_fd, &pt, sizeof(pt));
+    }
+}
 
 void reset(glm::dvec3 start_position) {
     position = start_position;
@@ -65,12 +78,36 @@ void reset(glm::dvec3 start_position) {
     old_velocity[0]=velocity;
     history_base_index = 0;
     history_cur_index = 1;
+    move_counter = 1;
+
+    // Enemy recording
+    if (motion_fd != -1) close(motion_fd);
+    motion_fd = open(TEMP_FILENAME, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+    write_point(position);
+}
+
+/** Finishes the enemy recording and moves it to the specified file. 
+ */
+void finish(glm::dvec3 end_position, const char * target_file) {
+    if (motion_fd == -1) return;
+    history_cur_index+=HISTORY-1;
+    history_cur_index%=HISTORY;
+    while (history_base_index != history_cur_index) {
+        history_base_index++;
+        history_base_index%=HISTORY;
+        write_point(old_position[history_base_index]);
+    }
+    for (int i=1; i<=8; i++) {
+        write_point((old_position[history_base_index]*(double)(8-i) + end_position*(double)i) / 8.);
+    }
+    close(motion_fd);
+    motion_fd = -1;
+    int ret = rename(TEMP_FILENAME, target_file);
+    if (ret==-1) perror("Failed to move recording.");
 }
 
 // checks user input
 void handle_events() {
-    moves=false;
-
     SDL_Event event;
   
     /* Check for events */
@@ -81,6 +118,10 @@ void handle_events() {
             bool state = (event.type == SDL_KEYDOWN);
             switch (event.key.keysym.sym) {
                 case SDLK_ESCAPE:
+                    if (motion_fd!=-1){
+                        close(motion_fd);
+                        motion_fd = -1;
+                    }
                     quit = true;
                     break;
                 case SDLK_w:
@@ -123,7 +164,6 @@ void handle_events() {
                 if (tau<-M_PI) tau += 2*M_PI;
                 if (phi> M_PI/2) phi =  M_PI/2;
                 if (phi<-M_PI/2) phi = -M_PI/2;
-                moves=true;
             }
             break;
         }
@@ -148,6 +188,7 @@ void handle_events() {
             history_cur_index%=HISTORY;
             position = old_position[history_cur_index];
             velocity = old_velocity[history_cur_index];
+            move_counter--;
         }
     } else {
         // Apply drag.
@@ -193,11 +234,8 @@ void handle_events() {
         // Move
         if (glm::length(velocity)>1e-3) {
             position += velocity;
-            moves = true;
-        }
-        
-        // Record history
-        if (moves) {
+            
+            // Record history
             old_position[history_cur_index]=position;
             old_velocity[history_cur_index]=velocity;
             history_cur_index++;
@@ -205,7 +243,9 @@ void handle_events() {
             if (history_base_index == history_cur_index) {
                 history_base_index++;
                 history_base_index%=HISTORY;
+                write_point(old_position[history_base_index]);
             }
+            move_counter++;
         }
     }
     
