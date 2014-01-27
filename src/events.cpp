@@ -159,6 +159,13 @@ void handle_events() {
         
         // Apply control
         double dist = (airborne?AIR_CONTROL:GROUND_CONTROL) * MOVE_SPEED;
+        if (
+            (button_state[button::W] != button_state[button::S]) &&
+            (button_state[button::A] != button_state[button::D])
+        ) {
+            dist *= 0.7071;
+        }
+            
         if (button_state[button::W]) {
             velocity += dist * M[2];
         }
@@ -171,6 +178,7 @@ void handle_events() {
         if (button_state[button::D]) {
             velocity += dist * M[0];
         }
+        
         if (airborne) {
             // Fall
             velocity += GRAVITY;

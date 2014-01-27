@@ -7,6 +7,9 @@
 
 int main (int argc, char *argv[]) {
     int map_current=-1;
+    if (argc==2) {
+        sscanf(argv[1],"%u",&map_next);
+    }
     init_screen("blockgame");  
     
     // mainloop

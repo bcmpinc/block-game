@@ -45,7 +45,7 @@ struct block {
     float posx;
     float sizex;
     float sizez;
-    float top;
+    float height;
     float bottom;
     float rotation; // this is in degrees.
     uint32_t color;
@@ -152,8 +152,8 @@ void load_scene(const char * file) {
             block_wire_indices[i*24+j] = wire_indices[j] + i*8;
         }
         const block &b = blockfile.list[i];
-        double sizey = b.top/2;
-        double posy = b.bottom + b.top/2;
+        double sizey = b.height/2;
+        double posy = b.bottom + b.height/2;
         glm::dmat3 rotation(glm::rotate(glm::dmat4(), b.rotation*M_PI/180, glm::dvec3(0,1,0)));
         glm::dvec3 pos = glm::dvec3(b.posx, posy, b.posz);
         glm::dvec3 size = glm::dvec3(b.sizex, sizey, b.sizez);
