@@ -50,6 +50,7 @@ static const double PLAYER_SIZE = 0.4;
 static const int GRID_SIZE = 1023;
 static const double COLLISION_EPSILON = 0.002;
 static const int END_DURATION = 60;
+static const int ENEMY_TRAIL = 128;
 
 static point3s grid[GRID_SIZE * 4];
 static point3fc * block_coords;
@@ -64,6 +65,8 @@ static bool gem_taken;
 static int end_counter;
 static filemap<point3f> enemy;
 static char rec_filename[512];
+static pointc not_yet_lost_color[ENEMY_TRAIL];
+static pointc lost_color[ENEMY_TRAIL];
 
 int map_next=0;
 
@@ -169,6 +172,11 @@ void load_scene(const char * file) {
     
     snprintf(rec_filename, sizeof(rec_filename), "%s.rec", file);
     enemy = filemap<point3f>(rec_filename);
+    
+    for (uint i=0; i<ENEMY_TRAIL; i++) {
+        not_yet_lost_color[i].color = 0xffff00u + ((i*256/ENEMY_TRAIL)<<24u);
+        lost_color[i].color = 0x0000ffu + ((i*256/ENEMY_TRAIL)<<24u);
+    }
 }
 
 static void draw_grid() {
@@ -226,13 +234,20 @@ static void draw_gem() {
 }
 
 static void draw_enemy() {
+    glPushMatrix();
+    glTranslated(0,-PLAYER_SIZE,0);
     enemy.list->attach();
     glLineWidth(3);
-    if (not_yet_lost()) glColor4f(0,1,1,0.5);
-    else glColor4f(1,0,0,0.5);
+    int first = std::max(0, (int)move_counter-ENEMY_TRAIL);
+    int last = std::min(enemy.length, move_counter);
+    if (not_yet_lost()) not_yet_lost_color[ENEMY_TRAIL-(int)move_counter].attach();
+    else lost_color[ENEMY_TRAIL-(int)move_counter].attach();
     glEnable(GL_BLEND);
-    glDrawArrays(GL_LINE_STRIP, 0, std::min(move_counter, enemy.length));
+    glEnableClientState(GL_COLOR_ARRAY);
+    glDrawArrays(GL_LINE_STRIP, first, last-first);
+    glDisableClientState(GL_COLOR_ARRAY);
     glDisable(GL_BLEND);
+    glPopMatrix();
 }
 
 static void draw_end_fade() {
@@ -309,7 +324,7 @@ void interact() {
             gem_taken = true;
             // printf("end: %d %d %d\n", enemy.fd, enemy.length, move_counter+8);
             if (not_yet_lost()) {
-                finish(gem_location, rec_filename);
+                finish(gem_location+glm::dvec3(0,PLAYER_SIZE,0), rec_filename);
             }
         } else if (end_counter>0) {
             end_counter--;

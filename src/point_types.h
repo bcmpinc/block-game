@@ -39,4 +39,9 @@ struct point3fc {
     void attach() const;
 };
 
+struct pointc {
+    uint32_t color;
+    void attach() const;
+};
+
 #endif

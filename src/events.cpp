@@ -98,7 +98,11 @@ void finish(glm::dvec3 end_position, const char * target_file) {
         write_point(old_position[history_base_index]);
     }
     for (int i=1; i<=8; i++) {
-        write_point((old_position[history_base_index]*(double)(8-i) + end_position*(double)i) / 8.);
+        write_point((
+            old_position[history_base_index]*(double)(8-i) + 
+            old_velocity[history_base_index]*(double)((8-i) * i) + 
+            end_position*(double)i
+        ) / 8.);
     }
     close(motion_fd);
     motion_fd = -1;
@@ -191,6 +195,8 @@ void handle_events() {
             move_counter--;
         }
     } else {
+        glm::dvec3 prev_velocity = velocity;
+        
         // Apply drag.
         if (airborne) {
             velocity *= (1-AIR_CONTROL);
@@ -233,11 +239,9 @@ void handle_events() {
         
         // Move
         if (glm::length(velocity)>1e-3) {
-            position += velocity;
-            
             // Record history
             old_position[history_cur_index]=position;
-            old_velocity[history_cur_index]=velocity;
+            old_velocity[history_cur_index]=prev_velocity;
             history_cur_index++;
             history_cur_index%=HISTORY;
             if (history_base_index == history_cur_index) {
@@ -246,6 +250,9 @@ void handle_events() {
                 write_point(old_position[history_base_index]);
             }
             move_counter++;
+
+            // Move
+            position += velocity;
         }
     }
     

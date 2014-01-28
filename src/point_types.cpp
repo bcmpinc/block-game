@@ -35,3 +35,7 @@ void point3fc::attach() const {
     glVertexPointer(3,GL_FLOAT,sizeof(*this),&this->x);
     glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*this),&this->color);
 }
+
+void pointc::attach() const {
+    glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(*this),this);
+}
