@@ -234,17 +234,39 @@ static void draw_gem() {
 }
 
 static void draw_enemy() {
+    if (move_counter >= enemy.length+ENEMY_TRAIL) return;
     glPushMatrix();
     glTranslated(0,-PLAYER_SIZE,0);
     enemy.list->attach();
-    glLineWidth(3);
+    glLineWidth(5);
     int first = std::max(0, (int)move_counter-ENEMY_TRAIL);
     int last = std::min(enemy.length, move_counter);
     if (not_yet_lost()) not_yet_lost_color[ENEMY_TRAIL-(int)move_counter].attach();
     else lost_color[ENEMY_TRAIL-(int)move_counter].attach();
     glEnable(GL_BLEND);
     glEnableClientState(GL_COLOR_ARRAY);
+    glDepthMask(false);
     glDrawArrays(GL_LINE_STRIP, first, last-first);
+    if (0 < move_counter && move_counter <= enemy.length) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glLineWidth(3);
+        point3f pos = enemy.list[move_counter-1];
+        glTranslated(pos.x,pos.y,pos.z);
+        point3fc sparks[64];
+        float IRM = 1. / RAND_MAX;
+        for (int i=0; i<32; i++) {
+            uint base_color = rand()&0xffffff;
+            sparks[i*2] = {0,0,0, 0xff000000 | base_color};
+            float x,y,z;
+            do {x=rand()*IRM-0.5;y=rand()*IRM-0.5;z=rand()*IRM-0.5;} while (x*x+y*y+z*z>0.25);
+            sparks[i*2+1] = {x,y,z, base_color};
+            
+        }
+        sparks->attach();
+        glDrawArrays(GL_LINES, 0, 64);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    glDepthMask(true);
     glDisableClientState(GL_COLOR_ARRAY);
     glDisable(GL_BLEND);
     glPopMatrix();
