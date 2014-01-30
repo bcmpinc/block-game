@@ -7,7 +7,7 @@ Run it using `./blockgame [start_level]`.
 
 Movement
 --------
-wasd-keys: walking around.
-space: jump.
-ctrl: reverse time.
-esc: quit.
+* wasd-keys: walking around.
+* space: jump.
+* ctrl: reverse time.
+* esc: quit.
