@@ -23,14 +23,14 @@
 
 #include "events.h"
 #include "point_types.h"
-
+#include "keymap.h"
 
 // Buttons
 class button {
     public:
     enum {
-        W, A, S, D, 
-        SPACE, CTRL, SHIFT,
+        FORWARD, BACKWARD, LEFT, RIGHT, 
+        JUMP, REWIND, 
         
         STATES
     };
@@ -127,26 +127,23 @@ void handle_events() {
                     }
                     quit = true;
                     break;
-                case SDLK_w:
-                    button_state[button::W] = state;
+                case KEY_FORWARD:
+                    button_state[button::FORWARD] = state;
                     break;
-                case SDLK_a:
-                    button_state[button::A] = state;
+                case KEY_BACKWARD:
+                    button_state[button::BACKWARD] = state;
                     break;
-                case SDLK_s:
-                    button_state[button::S] = state;
+                case KEY_LEFT:
+                    button_state[button::LEFT] = state;
                     break;
-                case SDLK_d:
-                    button_state[button::D] = state;
+                case KEY_RIGHT:
+                    button_state[button::RIGHT] = state;
                     break;
-                case SDLK_SPACE:
-                    button_state[button::SPACE] = state;
+                case KEY_JUMP:
+                    button_state[button::JUMP] = state;
                     break;
-                case SDLK_LCTRL:
-                    button_state[button::CTRL] = state;
-                    break;
-                case SDLK_LSHIFT:
-                    button_state[button::SHIFT] = state;
+                case KEY_REWIND:
+                    button_state[button::REWIND] = state;
                     break;
                 default:
                     break;
@@ -185,7 +182,7 @@ void handle_events() {
     // Obtain current axes
     glm::dmat3 M = glm::transpose(glm::dmat3(view));
     
-    if (button_state[button::CTRL]) {
+    if (button_state[button::REWIND]) {
         if (history_base_index != history_cur_index) {
             history_cur_index+=HISTORY-1;
             history_cur_index%=HISTORY;
@@ -206,22 +203,22 @@ void handle_events() {
         // Apply control
         double dist = (airborne?AIR_CONTROL:GROUND_CONTROL) * MOVE_SPEED;
         if (
-            (button_state[button::W] != button_state[button::S]) &&
-            (button_state[button::A] != button_state[button::D])
+            (button_state[button::FORWARD] != button_state[button::LEFT]) &&
+            (button_state[button::BACKWARD] != button_state[button::RIGHT])
         ) {
             dist *= 0.7071;
         }
             
-        if (button_state[button::W]) {
+        if (button_state[button::FORWARD]) {
             velocity += dist * M[2];
         }
-        if (button_state[button::S]) {
+        if (button_state[button::LEFT]) {
             velocity -= dist * M[2];
         }
-        if (button_state[button::A]) {
+        if (button_state[button::BACKWARD]) {
             velocity -= dist * M[0];
         }
-        if (button_state[button::D]) {
+        if (button_state[button::RIGHT]) {
             velocity += dist * M[0];
         }
         
@@ -230,7 +227,7 @@ void handle_events() {
             velocity += GRAVITY;
         } else {
             // Jump
-            if (button_state[button::SPACE]) {
+            if (button_state[button::JUMP]) {
                 velocity += JUMP_SPEED * M[1];
                 airborne = true;
             }
