@@ -20,7 +20,6 @@
 #include <vector>
 #include <GL/gl.h>
 
-#define GLM_FORCE_RADIANS 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -152,7 +151,7 @@ void load_scene(const char * file) {
         const block &b = blockfile.list[i];
         double sizey = b.height/2;
         double posy = b.bottom + b.height/2;
-        glm::dmat3 rotation(glm::rotate(glm::dmat4(), b.rotation*M_PI/180, glm::dvec3(0,1,0)));
+        glm::dmat3 rotation(glm::rotate(glm::dmat4(), (double)b.rotation, glm::dvec3(0,1,0)));
         glm::dvec3 pos = glm::dvec3(b.posx, posy, b.posz);
         glm::dvec3 size = glm::dvec3(b.sizex, sizey, b.sizez);
         glm::dvec3 r_pos = glm::transpose(rotation)*pos;
