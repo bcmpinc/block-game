@@ -18,7 +18,7 @@ Execute the following commands:
 
     mkdir build
     cd build
-    cmake ..
+    cmake -DCMAKE_BUILD_TYPE=Debug ..
     make
     ./blockgame
 

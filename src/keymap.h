@@ -14,9 +14,9 @@
 #endif
 
 #if KEYBOARD == DVORAK
-# define KEY_FORWARD  SDLK_a
+# define KEY_FORWARD  SDLK_COMMA
 # define KEY_BACKWARD SDLK_o
-# define KEY_LEFT     SDLK_COMMA
+# define KEY_LEFT     SDLK_a
 # define KEY_RIGHT    SDLK_e
 # define KEY_JUMP     SDLK_SPACE
 # define KEY_REWIND   SDLK_LCTRL
