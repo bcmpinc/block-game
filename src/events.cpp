@@ -212,10 +212,10 @@ void handle_events() {
         if (button_state[button::FORWARD]) {
             velocity += dist * M[2];
         }
-        if (button_state[button::LEFT]) {
+        if (button_state[button::BACKWARD]) {
             velocity -= dist * M[2];
         }
-        if (button_state[button::BACKWARD]) {
+        if (button_state[button::LEFT]) {
             velocity -= dist * M[0];
         }
         if (button_state[button::RIGHT]) {
