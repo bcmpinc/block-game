@@ -5,22 +5,23 @@ project(Blockgame)
 find_package(SDL REQUIRED)
 find_package(OpenGL REQUIRED)
 
-set(blockgame_src
+include_directories(${SDL_INCLUDE_DIR})
+
+SET(CMAKE_CXX_FLAGS "-std=gnu++11 -Wall -Wextra")
+
+add_executable(blockgame 
     src/main.cpp
     src/art_gl.cpp
     src/events.cpp
     src/timing.cpp
     src/scene.cpp
     src/point_types.cpp
-)
-
-include_directories(${SDL_INCLUDE_DIR})
-
-add_executable(blockgame ${blockgame_src}) 
+) 
 target_link_libraries(blockgame 
     ${SDL_LIBRARY} 
     ${OPENGL_LIBRARY} 
 )
-set_property(TARGET blockgame PROPERTY COMPILE_FLAGS "-Wall -std=gnu++11")
 
-
+add_executable(map_convert 
+    src/map_convert.cpp
+)
