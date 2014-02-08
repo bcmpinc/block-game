@@ -18,8 +18,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL/SDL.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <vector>
+#include <physfs.h>
 
 #include "events.h"
 #include "point_types.h"
@@ -44,15 +44,12 @@ static const double GROUND_CONTROL = 0.3;
 static const double AIR_CONTROL = 0.05;
 static const glm::dvec3 GRAVITY(0,-0.02,0);
 static const int HISTORY = 1024;
-static const char * TEMP_FILENAME = "temp.rec";
 
 static bool button_state[button::STATES];
 static bool mousemove=false;
-static glm::dvec3 old_position[HISTORY];
-static glm::dvec3 old_velocity[HISTORY];
-static int history_base_index, history_cur_index;
+static std::vector<glm::dvec3> old_position;
+static std::vector<glm::dvec3> old_velocity;
 static double tau=0, phi=0;
-static int motion_fd = -1;
 
 bool airborne = false;
 bool quit  = false;
@@ -61,52 +58,38 @@ glm::dvec3 position;
 glm::dvec3 velocity;
 uint move_counter;
 
-void write_point(glm::dvec3 p) {
-    if (motion_fd!=-1) {
-        point3f pt = {(float)p.x,(float)p.y,(float)p.z};
-        write(motion_fd, &pt, sizeof(pt));
-    }
-}
 
 void reset(glm::dvec3 start_position) {
     position = start_position;
     velocity = glm::dvec3(0,0,0);
     airborne = false;
     tau=0; phi=0;
-    old_position[0]=position;
-    old_velocity[0]=velocity;
-    history_base_index = 0;
-    history_cur_index = 1;
-    move_counter = 1;
-
-    // Enemy recording
-    if (motion_fd != -1) close(motion_fd);
-    motion_fd = open(TEMP_FILENAME, O_WRONLY | O_TRUNC | O_CREAT, 0644);
-    write_point(position);
+    old_position.clear();
+    old_velocity.clear();
+    move_counter = 0;
 }
 
 /** Finishes the enemy recording and moves it to the specified file. 
  */
 void finish(glm::dvec3 end_position, const char * target_file) {
-    if (motion_fd == -1) return;
-    history_cur_index+=HISTORY-1;
-    history_cur_index%=HISTORY;
-    while (history_base_index != history_cur_index) {
-        history_base_index++;
-        history_base_index%=HISTORY;
-        write_point(old_position[history_base_index]);
+    std::vector<point3f> record;
+    for (glm::dvec3 p : old_position) {
+        point3f pt = {(float)p.x,(float)p.y,(float)p.z};
+        record.push_back(pt);
     }
     for (int i=1; i<=8; i++) {
-        write_point((
-            old_position[history_base_index]*(double)(8-i) + 
-            old_velocity[history_base_index]*(double)((8-i) * i) + 
+        glm::dvec3 p = (
+            old_position.back()*(double)(8-i) + 
+            old_velocity.back()*(double)((8-i) * i) + 
             end_position*(double)i
-        ) / 8.);
+        ) / 8.;
+        point3f pt = {(float)p.x,(float)p.y,(float)p.z};
+        record.push_back(pt);
     }
-    close(motion_fd);
-    motion_fd = -1;
-    int ret = rename(TEMP_FILENAME, target_file);
-    if (ret==-1) perror("Failed to move recording.");
+    PHYSFS_File * w = PHYSFS_openWrite(target_file);
+    assert(w);
+    PHYSFS_write(w, record.data(), sizeof(point3f), record.size());
+    PHYSFS_close(w);
 }
 
 // checks user input
@@ -121,10 +104,6 @@ void handle_events() {
             bool state = (event.type == SDL_KEYDOWN);
             switch (event.key.keysym.sym) {
                 case SDLK_ESCAPE:
-                    if (motion_fd!=-1){
-                        close(motion_fd);
-                        motion_fd = -1;
-                    }
                     quit = true;
                     break;
                 case KEY_FORWARD:
@@ -183,11 +162,9 @@ void handle_events() {
     glm::dmat3 M = glm::transpose(glm::dmat3(view));
     
     if (button_state[button::REWIND]) {
-        if (history_base_index != history_cur_index) {
-            history_cur_index+=HISTORY-1;
-            history_cur_index%=HISTORY;
-            position = old_position[history_cur_index];
-            velocity = old_velocity[history_cur_index];
+        if (!old_position.empty()) {
+            position = old_position.back(); old_position.pop_back();
+            velocity = old_velocity.back(); old_velocity.pop_back();
             move_counter--;
         }
     } else {
@@ -236,15 +213,8 @@ void handle_events() {
         // Move
         if (glm::length(velocity)>1e-3) {
             // Record history
-            old_position[history_cur_index]=position;
-            old_velocity[history_cur_index]=prev_velocity;
-            history_cur_index++;
-            history_cur_index%=HISTORY;
-            if (history_base_index == history_cur_index) {
-                history_base_index++;
-                history_base_index%=HISTORY;
-                write_point(old_position[history_base_index]);
-            }
+            old_position.push_back(position);
+            old_velocity.push_back(prev_velocity);
             move_counter++;
 
             // Move

@@ -61,7 +61,7 @@ int main(int argc, const char ** argv) {
         } else {
             if (rotation>0.1 && rotation<179.9) {
                 fprintf(out, "block = " PLACE_BLOCK "; ", b.posx, posy, b.posz, b.sizex, sizey, b.sizez, color);
-                fprintf(out, "rotate(block, {axis={0,1,0}, angle=%5.1f})\n", rotation);
+                fprintf(out, "rotate_block(block, {angle=%5.1f})\n", rotation);
             } else {
                 fprintf(out, PLACE_BLOCK "\n", b.posx, posy, b.posz, b.sizex, sizey, b.sizez, color);
             }
