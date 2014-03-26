@@ -1,4 +1,4 @@
-place_gem({pos={-6.6,21.9,14.8}, record="/lvl_0004.rec"})
+place_gem({pos={-6.6,21.9,14.8}, record="lvl_0004.rec"})
 place_block({pos={-6.6,21.25,14.8}, size={1,0.25,1}, color=0xffff00})
 place_block({pos={3,1,6.6}, size={1,1,1}, color=0x00ffff})
 place_block({pos={2,2,9.6}, size={1,2,1}, color=0x00ffff})

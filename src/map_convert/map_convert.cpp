@@ -21,6 +21,7 @@ struct block {
 void get_basename(char * out, const char * path, size_t n) {
     const char * filename = strrchr(path,'/');
     if (!filename) filename = path;
+    else filename++;
     strncpy(out, filename, n);
     out[n-1]=0;
     char * point = strrchr(out,'.');

@@ -1,4 +1,4 @@
-place_gem({pos={6.8,21.9,42.4}, record="/lvl_0002.rec"})
+place_gem({pos={6.8,21.9,42.4}, record="lvl_0002.rec"})
 block = place_block({pos={6.8,21.25,42.4}, size={1,0.25,1}, color=0x4f6fcf}); rotate_block(block, {angle=160})
 place_block({pos={0.8,0.25,5.2}, size={1,0.25,1}, color=0xffffff})
 place_block({pos={0.8,1.25,9.2}, size={1,0.25,1}, color=0xffffff})
