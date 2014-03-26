@@ -20,6 +20,7 @@ struct gem {
     glm::dvec3 position;
     double rotation;
     bool taken;
+    int action;
     char record_file[64];
     std::vector<point3f> record;
     bool not_yet_lost() {
@@ -49,11 +50,13 @@ static short gem_wire_indices[] = {
     1,5,2,5,3,5,4,5,
 };
 
-// place_gem(data{pos, record, next})
+// place_gem(data{pos, record, action})
 static int place_gem(lua_State * L) {
     gem g;
     g.taken = false;
     g.rotation = 0;
+    g.record_file[0] = 0;
+    g.action = LUA_REFNIL;
     if (luaX_check_field(L, 1, "pos")) {
         g.position = luaX_get_vector(L);
     }
@@ -73,6 +76,9 @@ static int place_gem(lua_State * L) {
             PHYSFS_read(r, (void*)g.record.data(), sizeof(point3f), len);
             PHYSFS_close(r);
         }
+    }
+    if (luaX_check_field(L, 1, "action")) {
+        g.action = luaL_ref(L, LUA_REGISTRYINDEX);
     }
    
     gemlist.push_back(std::move(g));
@@ -172,21 +178,25 @@ void scenery<gems>::draw() {
 }
 
 template<>
-void scenery<gems>::interact() {
+void scenery<gems>::interact(lua_State * L) {
     for (gem &g : gemlist) {
-        if (g.taken) {
-            if (fade_state == FADE_STATES::BLACK) {
-                // TODO: load new map.
-            }
-        } else {
+        if (!g.taken) {
             g.rotation += 5;
             glm::dvec3 gem_dist = g.position - position;
             if (glm::dot(gem_dist,gem_dist) < PLAYER_SIZE*PLAYER_SIZE) {
                 g.taken = true;
-                // TODO perform action
-                fade_state = FADE_STATES::FADE_OUT;
-                if (g.not_yet_lost()) {
+                if (g.record_file[0] && g.not_yet_lost()) {
                     finish(g.position + glm::dvec3(0,PLAYER_SIZE,0), g.record_file);
+                }
+                if (g.action != LUA_REFNIL) {
+                    lua_rawgeti(L, LUA_REGISTRYINDEX, g.action);
+                    luaL_unref(L, LUA_REGISTRYINDEX, g.action);
+                    g.action = LUA_REFNIL;
+                    
+                    if (lua_pcall(L, 0, 0, 0) != 0) {
+                        fprintf(stderr, "error running action for gem '%s': %s\n", g.record_file, lua_tostring(L, -1));
+                        lua_pop(L, 1);
+                    }
                 }
             }
         }

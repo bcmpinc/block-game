@@ -29,7 +29,7 @@ struct scenery {
     static void init(lua_State *);
     static void clear();
     static void draw();
-    static void interact();
+    static void interact(lua_State * L);
 };
 
 #endif

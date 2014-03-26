@@ -208,7 +208,7 @@ void scenery<blocks>::draw() {
 }
 
 template<>
-void scenery<blocks>::interact() {
+void scenery<blocks>::interact(lua_State*) {
     // Block collision.
     for (uint i=0; i<container->blocks; i++) {
         const block_info &c = container->info[i];

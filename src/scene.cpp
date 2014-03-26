@@ -18,15 +18,46 @@
 
 #include <lua.hpp>
 #include <physfs.h>
+#include <cstring>
 
 #include "scene.h"
 #include "events.h"
 #include "scenery/scenery.h"
+#include "scenery/fade.h"
 
 struct grid;
 struct blocks;
 struct gems;
 struct fade;
+
+static char next_map[64];
+static bool load_next_map = false;
+
+static void do_load_map(lua_State * ) {
+    load_next_map = true;
+}
+
+static int load_map(lua_State * L) {
+    size_t length;
+    const char * map = luaL_checklstring(L, -1, &length);
+    luaL_argcheck(L, length<64, 1, "map path too long (max. 63 characters)");
+    memcpy(next_map, map, length+1);
+    lua_pop(L, 1);
+    fade_state = FADE_STATES::FADE_OUT;
+    fade_action = do_load_map;
+    return 0;
+}
+
+static void do_quit_game(lua_State * ) {
+    printf("Quit\n");
+    quit = true;
+}
+
+static int quit_game(lua_State * ) {
+    fade_state = FADE_STATES::FADE_OUT;
+    fade_action = do_quit_game;
+    return 0;
+}
 
 static char read_buffer[1024];
 const char* read_physfs_file(lua_State *, void* data, size_t* size) {
@@ -44,21 +75,24 @@ bool scene::load(const char* filename) {
     scenery<blocks>::init(scene_lua);
     scenery<gems>::init(scene_lua);
     scenery<fade>::init(scene_lua);
+    lua_register(scene_lua, "load_map", load_map);
+    lua_register(scene_lua, "quit",     quit_game);
     reset(glm::dvec3(0, PLAYER_SIZE, 0));
+    
     PHYSFS_File * script = PHYSFS_openRead(filename);
     if (!script) {
         fprintf(stderr, "Failed to open '%s'\n", filename);
-        abort();
+        exit(1);
     }
     int err = lua_load(scene_lua, read_physfs_file, script, filename);
     if (err) {
         fprintf(stderr, "Failed to parse '%s': %s\n", filename, lua_tolstring(scene_lua, 1, NULL));
-        abort();
+        exit(1);
     } else {
         err = lua_pcall(scene_lua, 0, LUA_MULTRET, 0);
         if (err) {
             fprintf(stderr, "Failed to execute '%s': %s\n", filename, lua_tolstring(scene_lua, 1, NULL));
-            abort();
+            exit(1);
         }
     }
     PHYSFS_close(script);
@@ -82,9 +116,17 @@ void scene::draw() {
 }
 
 void scene::interact() {
+    if (load_next_map) {
+        scene::unload();
+        printf("Loading map %s\n", next_map);
+        char next[80];
+        snprintf(next, 80, "maps/%s", next_map);
+        scene::load(next);
+        load_next_map = false;
+    }
     airborne = true;
-    scenery<blocks>::interact();
-    scenery<grid>::interact();
-    scenery<gems>::interact();
-    scenery<fade>::interact();
+    scenery<blocks>::interact(scene_lua);
+    scenery<grid>::interact(scene_lua);
+    scenery<gems>::interact(scene_lua);
+    scenery<fade>::interact(scene_lua);
 }

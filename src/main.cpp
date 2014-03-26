@@ -72,7 +72,9 @@ int main (int argc, char *argv[]) {
             printf("Usage: %s [initial_map]\n", argv[0]);
             return 1;
         }
-        if (!scene::load(argv[1])) {
+        char next[80];
+        snprintf(next, 80, "maps/%s", argv[1]);
+        if (!scene::load(next)) {
             fprintf(stderr, "Failed to load map '%s'\n", argv[1]);
             return 1;
         }

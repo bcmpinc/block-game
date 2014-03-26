@@ -36,7 +36,7 @@ void scenery<grid>::draw() {
 }
 
 template<>
-void scenery<grid>::interact() {
+void scenery<grid>::interact(lua_State*) {
     // Ground collision.
     if (position.y <= PLAYER_SIZE + COLLISION_EPSILON) {
         position.y = PLAYER_SIZE;

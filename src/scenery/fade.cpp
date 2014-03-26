@@ -8,6 +8,9 @@
 
 struct fade;
 
+FADE_STATES fade_state;
+void (*fade_action)(struct lua_State*) = NULL;
+
 static const int FADE_DURATION = 60;
 static int fade_counter;
 
@@ -46,14 +49,22 @@ void scenery<fade>::draw() {
     glPopMatrix();
 }
 
+static void do_action(lua_State * L) {
+    if (fade_action) {
+        fade_action(L);
+        fade_action = NULL;
+    }
+}
+
 template<>
-void scenery<fade>::interact() {
+void scenery<fade>::interact(lua_State * L) {
     switch(fade_state) {
         case FADE_STATES::FADE_OUT:
             if (fade_counter < FADE_DURATION) {
                 fade_counter++;
             } else {
                 fade_state = FADE_STATES::BLACK;
+                do_action(L);
             }
             break;
         case FADE_STATES::FADE_IN:
@@ -61,6 +72,7 @@ void scenery<fade>::interact() {
                 fade_counter--;
             } else {
                 fade_state = FADE_STATES::NONE;
+                do_action(L);
             }
             break;
         default:

@@ -1,11 +1,14 @@
 #ifndef SCENERY_FADE_H
 #define SCENERY_FADE_H
 
-static enum class FADE_STATES {
+enum class FADE_STATES {
     NONE,
     FADE_OUT,
     BLACK,
     FADE_IN
-} fade_state;
+};
+
+extern FADE_STATES fade_state;
+extern void (*fade_action)(struct lua_State*);
 
 #endif 
