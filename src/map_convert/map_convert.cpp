@@ -96,6 +96,10 @@ int main(int argc, const char ** argv) {
 
     filemap<block> blockfile(argv[1]);
     uint blocks = blockfile.length;
+    
+    out << "function next()"<<std::endl;
+    out << "  load_map(\""<<basename<<".map\")"<<std::endl;
+    out << "end"<<std::endl;
         
     for (uint i=0; i<blocks; i++) {
         const block &b = blockfile.list[i];
@@ -106,7 +110,7 @@ int main(int argc, const char ** argv) {
             float gem_pos_y = posy + sizey + GEM_HEIGHT;
             out<<"place_gem({pos=";
             out<<position(b.posx,gem_pos_y,b.posz);
-            out<<", record=\""<<basename<<".rec\"})";
+            out<<", record=\""<<basename<<".rec\", action=next})";
             out << std::endl;
         }
         float rotation = fmodf(b.rotation,180);

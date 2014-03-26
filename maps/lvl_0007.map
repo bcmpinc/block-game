@@ -1,4 +1,7 @@
-place_gem({pos={-2.2,12.9,46.4}, record="lvl_0007.rec"})
+function next()
+  load_map("lvl_0008.map")
+end
+place_gem({pos={-2.2,12.9,46.4}, record="lvl_0007.rec", action=next})
 place_block({pos={-2.2,12.25,46.4}, size={1,0.25,1}, color=0xffffff})
 block = place_block({pos={0,11.5,11.8}, size={1,0.5,12}, color=0x00004f}); rotate_block(block, {angle=15})
 block = place_block({pos={0,10.5,11.8}, size={2,0.5,11}, color=0x00005f}); rotate_block(block, {angle=30})

@@ -86,12 +86,11 @@ void scenery<gems>::init(lua_State * L) {
         lost_color[i].color = 0x0000ffu + ((i*256/ENEMY_TRAIL)<<24u);
     }
     lua_register(L, "place_gem",  place_gem);
-    
 }
 
 template<>
 void scenery<gems>::clear() {
-    
+    gemlist.clear();
 }
 
 template<>
@@ -184,6 +183,7 @@ void scenery<gems>::interact() {
             glm::dvec3 gem_dist = g.position - position;
             if (glm::dot(gem_dist,gem_dist) < PLAYER_SIZE*PLAYER_SIZE) {
                 g.taken = true;
+                // TODO perform action
                 fade_state = FADE_STATES::FADE_OUT;
                 if (g.not_yet_lost()) {
                     finish(g.position + glm::dvec3(0,PLAYER_SIZE,0), g.record_file);
