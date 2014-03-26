@@ -87,9 +87,12 @@ void finish(glm::dvec3 end_position, const char * target_file) {
         record.push_back(pt);
     }
     PHYSFS_File * w = PHYSFS_openWrite(target_file);
-    assert(w);
-    PHYSFS_write(w, record.data(), sizeof(point3f), record.size());
-    PHYSFS_close(w);
+    if (w) {
+        PHYSFS_write(w, record.data(), sizeof(point3f), record.size());
+        PHYSFS_close(w);
+    } else {
+        fprintf(stderr, "Failed to write record: %s\n", PHYSFS_getLastError());
+    }
 }
 
 // checks user input

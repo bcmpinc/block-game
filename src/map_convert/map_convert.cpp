@@ -1,6 +1,8 @@
 #include <cstring>
 #include <cmath>
 #include <string>
+#include <fstream>
+#include <iomanip>
 #include "filemap.h"
 
 static const double GEM_HEIGHT = 0.4; 
@@ -20,50 +22,103 @@ void get_basename(char * out, const char * path, size_t n) {
     const char * filename = strrchr(path,'/');
     if (!filename) filename = path;
     strncpy(out, filename, n);
-    out[n]=0;
+    out[n-1]=0;
     char * point = strrchr(out,'.');
     if (point) {
         point[0]=0;
     }
 }
 
-#define PLACE_BLOCK "place_block({pos={%5.1f,%5.1f,%5.1f}, size={%4.1f,%4.1f,%4.1f}, color=0x%06x})"        
+struct num {
+    int head, fraction;
+    num(float v) {
+        if (v>=0) {
+            int x = v*1000+0.5;
+            head=x/1000;
+            fraction=x%1000;
+        } else {
+            int x = v*-1000+0.5;
+            head=-(x/1000);
+            fraction=1000 - x%1000;
+        }
+    }
+};
+std::ostream& operator<<(std::ostream& o, const num &n) {
+    o<<n.head;
+    if (n.fraction) {
+        o<<'.';
+        if (n.fraction<100) o<<'0';
+        if (n.fraction<10) o<<'0';
+        int r = n.fraction;
+        while (r%10==0) r/=10;
+        o<<r;
+    }
+    return o;
+};
+
+struct position {
+    float x,y,z;
+    position(const position &p) : x(p.x), y(p.y), z(p.z) {}
+    position(float x, float y, float z) : x(x), y(y), z(z) {}
+};
+std::ostream& operator<<(std::ostream& o, const position &p) {
+    o << '{'<<num(p.x)<<','<<num(p.y)<<','<<num(p.z)<<'}';
+    return o;
+};
+
+struct place_block {
+    position pos;
+    position size;
+    int color;
+    place_block(position pos, position size, int color) : pos(pos), size(size), color(color) {}  
+};
+std::ostream& operator<<(std::ostream& o, const place_block &b) {
+    char c[8];
+    snprintf(c, 8, "%06x", b.color);
+    o << "place_block({pos="<<b.pos<<", size="<<b.size<<", color=0x"<<c<<"})";
+    return o;
+};
 
 /**
  * Program to convert the legacy maps into lua format.
  */
 int main(int argc, const char ** argv) {
     if (argc!=3) {
-        printf("Usage: %s inputfile outputfile", argv[0]);
+        printf("Usage: %s inputfile outputfile\n", argv[0]);
         return 1;
     }
-    FILE * out = fopen(argv[2], "w");
+    std::ofstream out(argv[2]);
+    assert(out.is_open());
+    
     char basename[64];
     get_basename(basename, argv[2], 64);
 
     filemap<block> blockfile(argv[1]);
     uint blocks = blockfile.length;
-    
+        
     for (uint i=0; i<blocks; i++) {
         const block &b = blockfile.list[i];
         float sizey = b.height/2;
         float posy = b.bottom + b.height/2;
         int color = ((b.color>>16)&0xff) | (b.color&0xff00) | ((b.color&0xff)<<16);
-        // printf("%6.3f %6.3f %6.3f %06x\n", b.posx, posy, b.posz, b.color);
         if (i==0) {
             float gem_pos_y = posy + sizey + GEM_HEIGHT;
-            fprintf(out, "place_gem({pos={%.1f,%.1f,%.1f}, record=\"%s.rec\"})\n", b.posx, gem_pos_y, b.posz, basename);
+            out<<"place_gem({pos=";
+            out<<position(b.posx,gem_pos_y,b.posz);
+            out<<", record=\""<<basename<<".rec\"})";
+            out << std::endl;
         }
         float rotation = fmodf(b.rotation,180);
         if (rotation<0) rotation+=180;
         if (abs(rotation-90.0)<0.1) {
-            fprintf(out, PLACE_BLOCK "\n", b.posz, posy, b.posx, b.sizez, sizey, b.sizex, color);
+            place_block pb(position(b.posz, posy, b.posx), position(b.sizez, sizey, b.sizex), color);
+            out << pb << std::endl;
         } else {
+            place_block pb(position(b.posx, posy, b.posz), position(b.sizex, sizey, b.sizez), color);
             if (rotation>0.1 && rotation<179.9) {
-                fprintf(out, "block = " PLACE_BLOCK "; ", b.posx, posy, b.posz, b.sizex, sizey, b.sizez, color);
-                fprintf(out, "rotate_block(block, {angle=%5.1f})\n", rotation);
+                out << "block = " << pb << "; rotate_block(block, {angle=" << num(rotation) << "})" << std::endl;
             } else {
-                fprintf(out, PLACE_BLOCK "\n", b.posx, posy, b.posz, b.sizex, sizey, b.sizez, color);
+                out << pb << std::endl;
             }
         }
     }

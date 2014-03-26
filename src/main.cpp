@@ -68,7 +68,7 @@ int main (int argc, char *argv[]) {
     
     // Open initial map
     if (argc==2) {
-        if (strcmp(argv[1],"-h") || strcmp(argv[1],"--help")) {
+        if (strcmp(argv[1],"-h")==0 || strcmp(argv[1],"--help")==0) {
             printf("Usage: %s [initial_map]\n", argv[0]);
             return 1;
         }

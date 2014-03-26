@@ -31,7 +31,7 @@ struct filemap {
     filemap() : size(0), length(0), fd(-1), list((const T*)MAP_FAILED) {}
     filemap(const char* filename);
     filemap(filemap&) = delete;
-    filemap(filemap&& src) : size(size), length(length), fd(fd), list(list) {
+    filemap(filemap&& src) : size(src.size), length(src.length), fd(src.fd), list(src.list) {
         src.fd = -1;
         src.list = (const T*)MAP_FAILED;
     }
