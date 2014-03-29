@@ -24,6 +24,7 @@
 #include "events.h"
 #include "scenery/scenery.h"
 #include "scenery/fade.h"
+#include "luaX.h"
 
 struct grid;
 struct blocks;
@@ -32,6 +33,7 @@ struct fade;
 
 static char next_map[64];
 static bool load_next_map = false;
+static int lua_tick_function = LUA_REFNIL;
 
 static void do_load_map(lua_State * ) {
     load_next_map = true;
@@ -59,14 +61,12 @@ static int quit_game(lua_State * ) {
     return 0;
 }
 
-static char read_buffer[1024];
-const char* read_physfs_file(lua_State *, void* data, size_t* size) {
-    PHYSFS_File * script = (PHYSFS_File*)data;
-    *size = PHYSFS_read(script, read_buffer, 1, 1024);
-    return read_buffer;
-}
-
 static lua_State * scene_lua;
+
+static void obtain_lua_tick_function(lua_State * L)
+{
+    
+}
 
 bool scene::load(const char* filename) {
     assert(scene_lua == NULL);
@@ -78,24 +78,7 @@ bool scene::load(const char* filename) {
     lua_register(scene_lua, "load_map", load_map);
     lua_register(scene_lua, "quit",     quit_game);
     reset(glm::dvec3(0, PLAYER_SIZE, 0));
-    
-    PHYSFS_File * script = PHYSFS_openRead(filename);
-    if (!script) {
-        fprintf(stderr, "Failed to open '%s'\n", filename);
-        exit(1);
-    }
-    int err = lua_load(scene_lua, read_physfs_file, script, filename);
-    if (err) {
-        fprintf(stderr, "Failed to parse '%s': %s\n", filename, lua_tolstring(scene_lua, 1, NULL));
-        exit(1);
-    } else {
-        err = lua_pcall(scene_lua, 0, LUA_MULTRET, 0);
-        if (err) {
-            fprintf(stderr, "Failed to execute '%s': %s\n", filename, lua_tolstring(scene_lua, 1, NULL));
-            exit(1);
-        }
-    }
-    PHYSFS_close(script);
+    luaX_execute_script(scene_lua, filename);
     return true;
 }
 

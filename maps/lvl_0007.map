@@ -1,8 +1,8 @@
 function next()
   load_map("lvl_0008.map")
 end
-place_gem({pos={-2.2,12.9,46.4}, record="lvl_0007.rec", action=next})
-place_block({pos={-2.2,12.25,46.4}, size={1,0.25,1}, color=0xffffff})
+place_gem({pos={-2.8,12.9,46.4}, record="lvl_0007.rec", action=next})
+place_block({pos={-2.8,12.25,46.4}, size={1,0.25,1}, color=0xffffff})
 block = place_block({pos={0,11.5,11.8}, size={1,0.5,12}, color=0x00004f}); rotate_block(block, {angle=15})
 block = place_block({pos={0,10.5,11.8}, size={2,0.5,11}, color=0x00005f}); rotate_block(block, {angle=30})
 block = place_block({pos={0,9.5,11.8}, size={3,0.5,10}, color=0x00006f}); rotate_block(block, {angle=45})
@@ -25,4 +25,4 @@ block = place_block({pos={11.6,12.2,34.4}, size={0.2,0.2,0.2}, color=0x47ff00});
 block = place_block({pos={8,12.2,36.6}, size={0.2,0.2,0.2}, color=0x47ff00}); rotate_block(block, {angle=76})
 block = place_block({pos={4.6,12.2,37.4}, size={0.2,0.2,0.2}, color=0x47ff00}); rotate_block(block, {angle=72})
 block = place_block({pos={1,12.2,39.4}, size={0.2,0.2,0.2}, color=0x47ff00}); rotate_block(block, {angle=82})
-block = place_block({pos={-1.8,12.2,41.8}, size={0.2,0.2,0.2}, color=0x47ff00}); rotate_block(block, {angle=175})
+block = place_block({pos={-1.2,12.2,41.8}, size={0.2,0.2,0.2}, color=0x47ff00}); rotate_block(block, {angle=175})

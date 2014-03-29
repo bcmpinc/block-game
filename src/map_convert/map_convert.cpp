@@ -31,20 +31,17 @@ void get_basename(char * out, const char * path, size_t n) {
 }
 
 struct num {
+    bool neg;
     int head, fraction;
     num(float v) {
-        if (v>=0) {
-            int x = v*1000+0.5;
-            head=x/1000;
-            fraction=x%1000;
-        } else {
-            int x = v*-1000+0.5;
-            head=-(x/1000);
-            fraction=1000 - x%1000;
-        }
+        neg = v<0;
+        int x = round(abs(v*1000));
+        head=x/1000;
+        fraction=x%1000;
     }
 };
 std::ostream& operator<<(std::ostream& o, const num &n) {
+    if (n.neg) o<<'-';
     o<<n.head;
     if (n.fraction) {
         o<<'.';
