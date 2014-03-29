@@ -63,9 +63,17 @@ static int quit_game(lua_State * ) {
 
 static lua_State * scene_lua;
 
-static void obtain_lua_tick_function(lua_State * L)
-{
-    
+static void obtain_lua_tick_function(lua_State * L) {
+    lua_tick_function = LUA_REFNIL;
+    lua_getglobal(L, "tick");
+    if (lua_isnil(L, -1)) {
+        lua_pop(L,1);
+    } else if (lua_isfunction(L, -1)) {
+        lua_tick_function = luaL_ref(L, LUA_REGISTRYINDEX);
+    } else {
+        fprintf(stderr, "'tick' is not a valid function");
+        lua_pop(L,1);
+    }
 }
 
 bool scene::load(const char* filename) {
@@ -79,6 +87,7 @@ bool scene::load(const char* filename) {
     lua_register(scene_lua, "quit",     quit_game);
     reset(glm::dvec3(0, PLAYER_SIZE, 0));
     luaX_execute_script(scene_lua, filename);
+    obtain_lua_tick_function(scene_lua);
     return true;
 }
 
@@ -107,6 +116,15 @@ void scene::interact() {
         scene::load(next);
         load_next_map = false;
     }
+    if (lua_tick_function != LUA_REFNIL) {
+        lua_rawgeti(scene_lua, LUA_REGISTRYINDEX, lua_tick_function);
+        lua_pushinteger(scene_lua, move_counter);
+        if (lua_pcall(scene_lua, 1, 0, 0) != 0) {
+            fprintf(stderr, "error running tick function: %s\n", lua_tostring(scene_lua, -1));
+            lua_pop(scene_lua, 1);
+        }
+    }
+    
     airborne = true;
     scenery<blocks>::interact(scene_lua);
     scenery<grid>::interact(scene_lua);

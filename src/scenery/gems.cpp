@@ -78,6 +78,7 @@ static int place_gem(lua_State * L) {
         }
     }
     if (luaX_check_field(L, 1, "action")) {
+        luaL_argcheck(L, lua_isfunction(L, -1), 1, "action must be a function");
         g.action = luaL_ref(L, LUA_REGISTRYINDEX);
     }
    
@@ -186,6 +187,7 @@ void scenery<gems>::interact(lua_State * L) {
             if (glm::dot(gem_dist,gem_dist) < PLAYER_SIZE*PLAYER_SIZE) {
                 g.taken = true;
                 if (g.record_file[0] && g.not_yet_lost()) {
+                    printf("Saving record for gem '%s'\n", g.record_file);
                     finish(g.position + glm::dvec3(0,PLAYER_SIZE,0), g.record_file);
                 }
                 if (g.action != LUA_REFNIL) {

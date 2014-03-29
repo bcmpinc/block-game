@@ -12,8 +12,10 @@ struct blocks;
 
 struct block_info {
     glm::dvec3 position;
+    glm::dvec3 velocity;
     glm::dvec3 size;
     glm::dmat3 rotation;
+    glm::dmat3 rotational_velocity;
     glm::dvec3 lb;
     glm::dvec3 ub;
     int color;
@@ -36,6 +38,7 @@ struct block_container {
     std::vector<unsigned short> face_indices;
     std::vector<unsigned short> wire_indices;
     std::vector<point3f> collision_nodes;
+    std::vector<point3f> collision_node_velocities;
     unsigned int blocks;
     void recompute(unsigned int i) {
         assert(i<blocks);
@@ -73,12 +76,16 @@ static short wire_indices[] = {
     6,7,
 };
 
-// place_block(info{pos, size, color}) : id;
+// place_block(info{pos, vel, size, color}) : id;
 static int place_block(lua_State * L) {
     block_info info;
 
     if (luaX_check_field(L, 1, "pos")) {
         info.position = luaX_get_vector(L);
+    }
+
+    if (luaX_check_field(L, 1, "vel")) {
+        info.velocity = luaX_get_vector(L);
     }
     
     if (luaX_check_field(L, 1, "size")) {
@@ -100,6 +107,8 @@ static int place_block(lua_State * L) {
     }
     container->info.push_back(info);
     container->collision_nodes.push_back(point3f());
+    container->collision_node_velocities.push_back(point3f());
+    container->collision_node_velocities.push_back(point3f());
     container->coordinates.resize(container->coordinates.size()+8);
     container->blocks++;
     
@@ -111,7 +120,7 @@ static int place_block(lua_State * L) {
     return 1;
 }
 
-// move_block(id, info{pos, size, color});
+// move_block(id, info{pos, vel, size, color});
 static int move_block(lua_State * L) {
     unsigned int i = lua_tonumber(L, 1);
     luaL_argcheck(L, i<container->blocks, 1, "Block id out of range.");
@@ -121,6 +130,10 @@ static int move_block(lua_State * L) {
         info.position = luaX_get_vector(L);
     }
     
+    if (luaX_check_field(L, 2, "vel")) {
+        info.velocity = luaX_get_vector(L);
+    }
+
     if (luaX_check_field(L, 2, "size")) {
         info.size = luaX_get_vector(L);
     }
@@ -136,32 +149,43 @@ static int move_block(lua_State * L) {
     return 0;
 }
 
-// rotate(id, {axis, angle(deg), reset})
+// rotate(id, {axis, angle(deg), angle_vel(deg), reset})
 static int rotate_block(lua_State * L) {
     unsigned int i = lua_tonumber(L, 1);
     luaL_argcheck(L, i<container->blocks, 1, "Block id out of range.");
     block_info &info = container->info[i];
 
     bool ok = false;
+    bool reset = false;
 
     if (luaX_check_field(L, 2, "reset")) {
-        info.rotation = glm::dmat3();
-        ok = true;
+        reset = true;
     }
     
     glm::dvec3 axis(0,1,0);
     if (luaX_check_field(L, 2, "axis")) {
-        info.size = luaX_get_vector(L);
+        axis = luaX_get_vector(L);
     }
     
     if (luaX_check_field(L, 2, "angle")) {
         double angle = lua_tonumber(L, -1);
         lua_pop(L, 1);
-        info.rotation *= glm::dmat3(glm::rotate(glm::dmat4(), angle, axis));
+        glm::dmat3 rot(glm::rotate(glm::dmat4(), angle, axis));
+        if (reset) info.rotation = rot;
+        else info.rotation *= rot;
         ok = true;
     }
 
-    luaL_argcheck(L, ok, 2, "rotation requires either 'reset' or 'angle'.");
+    if (luaX_check_field(L, 2, "angle_vel")) {
+        double angle_vel = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        glm::dmat3 rot_vel(glm::rotate(glm::dmat4(), angle_vel, axis));
+        if (reset) info.rotational_velocity = rot_vel;
+        else info.rotational_velocity *= rot_vel;
+        ok = true;
+    }
+
+    luaL_argcheck(L, ok, 2, "rotation requires either 'angle' or 'angle_vel'.");
 
     // Update computed values.
     container->recompute(i);
@@ -205,6 +229,10 @@ void scenery<blocks>::draw() {
     glColor3f(1,1,1);
     glPointSize(2.0);
     glDrawArrays(GL_POINTS, 0, container->blocks);
+
+    container->collision_node_velocities.data()->attach();
+    glColor3f(0.5,0.5,0.5);
+    glDrawArrays(GL_LINES, 0, container->blocks*2);
 }
 
 template<>
@@ -213,12 +241,23 @@ void scenery<blocks>::interact(lua_State*) {
     for (uint i=0; i<container->blocks; i++) {
         const block_info &c = container->info[i];
         point3f & n = container->collision_nodes[i];
-        glm::dvec3 projected = c.rotation * glm::min(c.ub,glm::max(c.lb,glm::transpose(c.rotation)*position));
+        glm::dvec3 projected = c.rotation * glm::min(c.ub,glm::max(c.lb,position*c.rotation));
         n.x = projected.x;
         n.y = projected.y;
         n.z = projected.z;
         glm::dvec3 dist = projected - position;
         double d = glm::dot(dist,dist);
+        
+        // Compute velocity of collision node
+        glm::dvec3 cn_rel_pos = projected - c.position;
+        glm::dvec3 cn_vel = c.velocity + c.rotational_velocity*cn_rel_pos - cn_rel_pos;
+        glm::dvec3 cnv2 = projected + cn_vel*10.;
+        container->collision_node_velocities[2*i] = n;
+        point3f & m = container->collision_node_velocities[2*i+1];
+        m.x = cnv2.x;
+        m.y = cnv2.y;
+        m.z = cnv2.z;
+        
         if (1e-3 < d && d <= PLAYER_SIZE*PLAYER_SIZE) {
             d = sqrt(d);
             dist /= d;

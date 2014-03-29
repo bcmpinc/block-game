@@ -10,6 +10,7 @@
 # define KEY_LEFT     SDLK_a
 # define KEY_RIGHT    SDLK_d
 # define KEY_JUMP     SDLK_SPACE
+# define KEY_ADVANCE  SDLK_LSHIFT
 # define KEY_REWIND   SDLK_LCTRL
 #endif
 
@@ -19,5 +20,6 @@
 # define KEY_LEFT     SDLK_a
 # define KEY_RIGHT    SDLK_e
 # define KEY_JUMP     SDLK_SPACE
+# define KEY_ADVANCE  SDLK_LSHIFT
 # define KEY_REWIND   SDLK_LCTRL
 #endif

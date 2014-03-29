@@ -30,7 +30,7 @@ class button {
     public:
     enum {
         FORWARD, BACKWARD, LEFT, RIGHT, 
-        JUMP, REWIND, 
+        JUMP, ADVANCE, REWIND, 
         
         STATES
     };
@@ -57,7 +57,6 @@ glm::dmat3 orientation;
 glm::dvec3 position;
 glm::dvec3 velocity;
 uint move_counter;
-
 
 void reset(glm::dvec3 start_position) {
     position = start_position;
@@ -123,6 +122,9 @@ void handle_events() {
                     break;
                 case KEY_JUMP:
                     button_state[button::JUMP] = state;
+                    break;
+                case KEY_ADVANCE:
+                    button_state[button::ADVANCE] = state;
                     break;
                 case KEY_REWIND:
                     button_state[button::REWIND] = state;
@@ -214,7 +216,7 @@ void handle_events() {
         }
         
         // Move
-        if (glm::length(velocity)>1e-3) {
+        if (glm::length(velocity)>1e-3 || button_state[button::ADVANCE]) {
             // Record history
             old_position.push_back(position);
             old_velocity.push_back(prev_velocity);
