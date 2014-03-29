@@ -27,6 +27,7 @@ void finish(glm::dvec3 end_position, const char * target_file);
 
 extern bool quit;
 extern bool airborne;
+extern glm::dvec3 ground_vel;
 extern glm::dmat3 orientation;
 extern glm::dvec3 position;
 extern glm::dvec3 velocity;

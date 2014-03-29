@@ -91,6 +91,7 @@ int main (int argc, char *argv[]) {
     while (!quit) {
         Timer t;
         scene::interact();
+        //printf("%6.3lf %6.3lf %6.3lf\n", velocity.x, velocity.y, velocity.z);
         clear_screen();
         set_matrix();
         scene::draw();

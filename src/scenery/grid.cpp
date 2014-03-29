@@ -42,5 +42,6 @@ void scenery<grid>::interact(lua_State*) {
         position.y = PLAYER_SIZE;
         velocity.y = 0;
         airborne = false;
+        ground_vel = glm::dvec3(0,0,0);
     }
 }

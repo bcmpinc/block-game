@@ -52,6 +52,7 @@ static std::vector<glm::dvec3> old_velocity;
 static double tau=0, phi=0;
 
 bool airborne = false;
+glm::dvec3 ground_vel;
 bool quit  = false;
 glm::dmat3 orientation;
 glm::dvec3 position;
@@ -61,6 +62,7 @@ uint move_counter;
 void reset(glm::dvec3 start_position) {
     position = start_position;
     velocity = glm::dvec3(0,0,0);
+    ground_vel = glm::dvec3(0,0,0);
     airborne = false;
     tau=0; phi=0;
     old_position.clear();
@@ -179,6 +181,7 @@ void handle_events() {
         if (airborne) {
             velocity *= (1-AIR_CONTROL);
         } else {
+            velocity -= ground_vel;
             velocity *= (1-GROUND_CONTROL);
         }
         
@@ -213,6 +216,7 @@ void handle_events() {
                 velocity += JUMP_SPEED * M[1];
                 airborne = true;
             }
+            velocity += ground_vel;
         }
         
         // Move

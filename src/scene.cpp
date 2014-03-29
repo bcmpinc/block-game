@@ -79,6 +79,7 @@ static void obtain_lua_tick_function(lua_State * L) {
 bool scene::load(const char* filename) {
     assert(scene_lua == NULL);
     scene_lua = luaL_newstate();
+    luaopen_math(scene_lua);
     scenery<grid>::init(scene_lua);
     scenery<blocks>::init(scene_lua);
     scenery<gems>::init(scene_lua);

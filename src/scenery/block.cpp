@@ -38,7 +38,6 @@ struct block_container {
     std::vector<unsigned short> face_indices;
     std::vector<unsigned short> wire_indices;
     std::vector<point3f> collision_nodes;
-    std::vector<point3f> collision_node_velocities;
     unsigned int blocks;
     void recompute(unsigned int i) {
         assert(i<blocks);
@@ -107,8 +106,6 @@ static int place_block(lua_State * L) {
     }
     container->info.push_back(info);
     container->collision_nodes.push_back(point3f());
-    container->collision_node_velocities.push_back(point3f());
-    container->collision_node_velocities.push_back(point3f());
     container->coordinates.resize(container->coordinates.size()+8);
     container->blocks++;
     
@@ -229,10 +226,6 @@ void scenery<blocks>::draw() {
     glColor3f(1,1,1);
     glPointSize(2.0);
     glDrawArrays(GL_POINTS, 0, container->blocks);
-
-    container->collision_node_velocities.data()->attach();
-    glColor3f(0.5,0.5,0.5);
-    glDrawArrays(GL_LINES, 0, container->blocks*2);
 }
 
 template<>
@@ -247,27 +240,25 @@ void scenery<blocks>::interact(lua_State*) {
         n.z = projected.z;
         glm::dvec3 dist = projected - position;
         double d = glm::dot(dist,dist);
-        
-        // Compute velocity of collision node
-        glm::dvec3 cn_rel_pos = projected - c.position;
-        glm::dvec3 cn_vel = c.velocity + c.rotational_velocity*cn_rel_pos - cn_rel_pos;
-        glm::dvec3 cnv2 = projected + cn_vel*10.;
-        container->collision_node_velocities[2*i] = n;
-        point3f & m = container->collision_node_velocities[2*i+1];
-        m.x = cnv2.x;
-        m.y = cnv2.y;
-        m.z = cnv2.z;
-        
         if (1e-3 < d && d <= PLAYER_SIZE*PLAYER_SIZE) {
+            // Normalize dist
             d = sqrt(d);
             dist /= d;
+            
             // Move out of cube
             position -= dist*(PLAYER_SIZE-d-COLLISION_EPSILON);
-            // Fix velocity.
-            velocity -= dist*glm::dot(dist, velocity);
+            
+            // Compute velocity of collision node
+            glm::dvec3 cn_rel_pos = projected - c.position;
+            glm::dvec3 cn_vel = c.velocity + c.rotational_velocity*cn_rel_pos - cn_rel_pos;
+            
+            // Change velocity to not be moving into the cube.
+            velocity -= dist*std::max(glm::dot(dist, velocity-cn_vel), 0.0);
+            
             // Walking?
             if (dist.y<-0.8) {
                 airborne = false;
+                ground_vel = cn_vel;
             }
         }
     }
