@@ -39,17 +39,35 @@ bool luaX_execute_script(lua_State * L, const char * physfs_filename)
     }
     int err = lua_load(L, read_physfs_file, script, physfs_filename);
     if (err) {
-        fprintf(stderr, "Failed to parse '%s': %s\n", physfs_filename, lua_tolstring(L, 1, NULL));
+        fprintf(stderr, "Failed to parse '%s': %s\n", physfs_filename, lua_tolstring(L, -1, NULL));
         PHYSFS_close(script);
         return false;
     } else {
         err = lua_pcall(L, 0, LUA_MULTRET, 0);
         if (err) {
-            fprintf(stderr, "Failed to execute '%s': %s\n", physfs_filename, lua_tolstring(L, 1, NULL));
+            fprintf(stderr, "Failed to execute '%s': %s\n", physfs_filename, lua_tolstring(L, -1, NULL));
             PHYSFS_close(script);
             return false;
         }
     }
     PHYSFS_close(script);
     return true;
+}
+
+static int math_hypot(lua_State * L) {
+    luaL_argcheck(L, lua_isnumber(L, 1), 1, "Argument must be a number");
+    luaL_argcheck(L, lua_isnumber(L, 2), 2, "Argument must be a number");
+    double x = lua_tonumber(L, 1);
+    double y = lua_tonumber(L, 2);
+    lua_pop(L,2);
+    lua_pushnumber(L, hypot(x,y));
+    return 1;
+}
+
+void luaX_open_math_ext(lua_State* L) 
+{
+    lua_getglobal(L, "math");
+    lua_pushcfunction(L, math_hypot);
+    lua_setfield(L, 1, "hypot");
+    lua_pop(L,1);
 }

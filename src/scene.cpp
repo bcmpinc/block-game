@@ -34,6 +34,8 @@ struct fade;
 static char next_map[64];
 static bool load_next_map = false;
 static int lua_tick_function = LUA_REFNIL;
+static PHYSFS_sint64 map_script_moddate;
+static char script_file[256];
 
 static void do_load_map(lua_State * ) {
     load_next_map = true;
@@ -76,20 +78,29 @@ static void obtain_lua_tick_function(lua_State * L) {
     }
 }
 
-bool scene::load(const char* filename) {
+static bool do_load(const char* filename, bool do_reset) {
+    map_script_moddate = PHYSFS_getLastModTime(filename);
+    strncpy(script_file, filename, 255);
     assert(scene_lua == NULL);
     scene_lua = luaL_newstate();
     luaopen_math(scene_lua);
+    luaX_open_math_ext(scene_lua);
     scenery<grid>::init(scene_lua);
     scenery<blocks>::init(scene_lua);
     scenery<gems>::init(scene_lua);
     scenery<fade>::init(scene_lua);
     lua_register(scene_lua, "load_map", load_map);
     lua_register(scene_lua, "quit",     quit_game);
-    reset(glm::dvec3(0, PLAYER_SIZE, 0));
-    luaX_execute_script(scene_lua, filename);
+    if (do_reset) reset(glm::dvec3(0, PLAYER_SIZE, 0));
+    if (!luaX_execute_script(scene_lua, filename)) {
+        return false;
+    }
     obtain_lua_tick_function(scene_lua);
     return true;
+}
+
+bool scene::load(const char* filename) {
+    return do_load(filename, true);
 }
 
 void scene::unload() {
@@ -116,6 +127,11 @@ void scene::interact() {
         snprintf(next, 80, "maps/%s", next_map);
         scene::load(next);
         load_next_map = false;
+    }
+    if (map_script_moddate != PHYSFS_getLastModTime(script_file)) {
+        scene::unload();
+        printf("Reloading %s\n", script_file);
+        do_load(script_file, false);
     }
     if (lua_tick_function != LUA_REFNIL) {
         lua_rawgeti(scene_lua, LUA_REGISTRYINDEX, lua_tick_function);
