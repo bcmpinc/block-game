@@ -1,11 +1,13 @@
 -- A ferris wheel
 
 info = {
-  RADIUS =  9,
-  HEIGHT = 12,
-  WIDTH  =  8,
-  DEPTH  =  2,
-  AMOUNT = 11,
+  RADIUS   = 10,
+  HEIGHT   = 14,
+  WIDTH    =  8,
+  DEPTH    =  2,
+  AMOUNT   = 11,
+  VELOCITY =  2,
+  CARRIAGE_SIZE = 2,
 };
 
 -- base
@@ -14,15 +16,26 @@ function feriswheel_base(info)
   place_block({pos={0,0.25,-info.DEPTH-0.1}, size={info.DEPTH-0.5,0.05,0.1}, color=0x60ffff});
   place_block({pos={0,0.15,-info.DEPTH-0.2}, size={info.DEPTH-0.3,0.05,0.2}, color=0x90ffff});
   place_block({pos={0,0.05,-info.DEPTH-0.3}, size={info.DEPTH-0.1,0.05,0.3}, color=0x60ffff});
+  
   side_width = info.WIDTH - 0.5;
   side_length = math.hypot(info.HEIGHT-0.1, side_width)/2
-  block1 = place_block({pos={ side_width/2,info.HEIGHT/2+0.2,info.DEPTH-0.12}, size={0.2,side_length,0.1}, color=0x606060});
-  block2 = place_block({pos={-side_width/2,info.HEIGHT/2+0.2,info.DEPTH-0.12}, size={0.2,side_length,0.1}, color=0x606060});
+  offset = info.DEPTH-0.12;
+  block1 = place_block({pos={ side_width/2,info.HEIGHT/2+0.2,offset}, size={0.2,side_length,0.1}, color=0x606060});
+  block2 = place_block({pos={-side_width/2,info.HEIGHT/2+0.2,offset}, size={0.2,side_length,0.1}, color=0x606060});
   side_angle = math.deg(math.atan2(side_width, info.HEIGHT-0.1));
   rotate_block(block1, {angle=side_angle, axis={0,0,1}});
   rotate_block(block2, {angle=-side_angle, axis={0,0,1}});
-  place_block({pos={0,info.HEIGHT/2+0.2,info.DEPTH-0.12}, size={side_width/2,0.2,0.08}, color=0x606060});
-  place_block({pos={0,info.HEIGHT,info.DEPTH-0.12}, size={1,1,0.12}, color=0x9090ff});
+  place_block({pos={0,info.HEIGHT/2+0.2,offset}, size={side_width/2,0.2,0.08}, color=0x606060});
+  place_block({pos={0,info.HEIGHT,offset}, size={1,1,0.12}, color=0x9090ff});
+
+  block1 = place_block({pos={ side_width/2,info.HEIGHT/2+0.2,-offset}, size={0.2,side_length,0.1}, color=0x606060});
+  block2 = place_block({pos={-side_width/2,info.HEIGHT/2+0.2,-offset}, size={0.2,side_length,0.1}, color=0x606060});
+  side_angle = math.deg(math.atan2(side_width, info.HEIGHT-0.1));
+  rotate_block(block1, {angle=side_angle, axis={0,0,1}});
+  rotate_block(block2, {angle=-side_angle, axis={0,0,1}});
+  place_block({pos={0,info.HEIGHT/2+0.2,-offset}, size={side_width/2,0.2,0.08}, color=0x606060});
+  place_block({pos={0,info.HEIGHT,-offset}, size={1,1,0.12}, color=0x9090ff});
+  
   motor = place_block({pos={0,info.HEIGHT,0}, size={0.2,0.2,info.DEPTH-0.24}, color=0x606060});
   rotate_block(motor, {angle=45, axis={0,0,1}});
 end
@@ -65,22 +78,72 @@ function feriswheel_wheel(info)
     rotate_block(block, {angle=45, axis={0,1,0}});
     rotate_block(block, {angle=ang+hang, axis={0,0,1}});
     block_list[#block_list+1] = block;
-    
-    tx = math.cos(math.rad(ang)) * (info.HEIGHT-1);
-    ty = math.sin(math.rad(ang)) * (info.HEIGHT-1) + info.HEIGHT;
-    block = place_block({pos={tx,ty,0}, size={0.1,offset,offset}, color=0x0000ff});
-    rotate_block(block, {angle=ang, axis={0,0,1}});
-    block_list[#block_list+1] = block;
   end
   obj = create_object(block_list, {0,info.HEIGHT,0});
+  rotate_object(obj, {angle_vel=info.VELOCITY, axis={0,0,1}, reset=1});
   return obj;
+end
+
+-- cariage
+function feriswheel_cariages(info)
+  obj_list={};
+  for i = 0,info.AMOUNT-1 do
+    block_list={};
+    top = info.HEIGHT - info.RADIUS;
+    hinge = info.CARRIAGE_SIZE/16;
+    height = (top - hinge*6 - 1.4)/2;
+    offset = info.DEPTH-0.8;
+    block = place_block({pos={0,0.6,0}, size={info.CARRIAGE_SIZE+0.1, 0.15, offset+0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={ info.CARRIAGE_SIZE,0.75+height, offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={ info.CARRIAGE_SIZE,0.75+height,-offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={-info.CARRIAGE_SIZE,0.75+height, offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={-info.CARRIAGE_SIZE,0.75+height,-offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    
+    block = place_block({pos={ info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={-info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=0x0000ff});
+    block_list[#block_list+1] = block;
+    
+    hinge_ang = math.deg(math.atan2(3,4));
+    block = place_block({pos={-hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    rotate_block(block, {angle=hinge_ang, axis={0,0,1}, reset=1});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={-hinge*8,top-hinge*6,-offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    rotate_block(block, {angle=hinge_ang, axis={0,0,1}, reset=1});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={ hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    rotate_block(block, {angle=-hinge_ang, axis={0,0,1}, reset=1});
+    block_list[#block_list+1] = block;
+    block = place_block({pos={ hinge*8,top-hinge*6,-offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    rotate_block(block, {angle=-hinge_ang, axis={0,0,1}, reset=1});
+    block_list[#block_list+1] = block;
+    
+    obj = create_object(block_list, {0,info.HEIGHT - info.RADIUS,0});
+    obj_list[#obj_list+1] = obj;
+  end
+  return obj_list;
 end
 
 feriswheel_base(info);
 wheel = feriswheel_wheel(info);
-rotate_object(wheel, {angle_vel=1, axis={0,0,1}, reset=1});
+carriages = feriswheel_cariages(info);
 
 function tick(n)
-  rotate_object(wheel, {angle=n, axis={0,0,1}, reset=1});
+  rotate_object(wheel, {angle=n*info.VELOCITY, axis={0,0,1}, reset=1});
   update_object(wheel);
+  for i = 0,info.AMOUNT-1 do
+    ang = -90+360*i/info.AMOUNT + n*info.VELOCITY;
+    ex = math.cos(math.rad(ang)) * info.RADIUS;
+    ey = math.sin(math.rad(ang)) * info.RADIUS + info.RADIUS;
+    fx = math.cos(math.rad(ang + info.VELOCITY)) * info.RADIUS;
+    fy = math.sin(math.rad(ang + info.VELOCITY)) * info.RADIUS + info.RADIUS;
+    carriage = carriages[i+1];
+    move_object(carriage, {offset={ex,ey,0}, acceleration={fx-ex,fy-ey,0}, reset=1});
+    update_object(carriage);
+  end
 end
