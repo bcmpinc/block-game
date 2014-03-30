@@ -112,11 +112,11 @@ int main(int argc, const char ** argv) {
         }
         float rotation = fmodf(b.rotation,180);
         if (rotation<0) rotation+=180;
+        place_block pb(position(b.posx, posy, b.posz), position(b.sizex, sizey, b.sizez), color);
         if (abs(rotation-90.0)<0.1) {
-            place_block pb(position(b.posz, posy, b.posx), position(b.sizez, sizey, b.sizex), color);
+            std::swap(pb.size.x,pb.size.z);
             out << pb << std::endl;
         } else {
-            place_block pb(position(b.posx, posy, b.posz), position(b.sizex, sizey, b.sizez), color);
             if (rotation>0.1 && rotation<179.9) {
                 out << "block = " << pb << "; rotate_block(block, {angle=" << num(rotation) << "})" << std::endl;
             } else {
