@@ -26,6 +26,8 @@
 #include "scenery/fade.h"
 #include "luaX.h"
 
+static const bool CHECK_UPDATES = false;
+
 struct grid;
 struct blocks;
 struct gems;
@@ -41,6 +43,7 @@ static void do_load_map(lua_State * ) {
     load_next_map = true;
 }
 
+// load_map(filename)
 static int load_map(lua_State * L) {
     size_t length;
     const char * map = luaL_checklstring(L, -1, &length);
@@ -60,6 +63,17 @@ static void do_quit_game(lua_State * ) {
 static int quit_game(lua_State * ) {
     fade_state = FADE_STATES::FADE_OUT;
     fade_action = do_quit_game;
+    return 0;
+}
+
+// set_start(position)
+static int set_start(lua_State * L) {
+    luaL_argcheck(L, lua_gettop(L)==1, 1, "Expected only 1 position argument");
+    position = luaX_get_vector(L) + glm::dvec3(0,PLAYER_SIZE,0);
+    return 0;
+}
+
+static int fake_set_start(lua_State *) {
     return 0;
 }
 
@@ -89,6 +103,7 @@ static bool do_load(const char* filename, bool do_reset) {
     scenery<blocks>::init(scene_lua);
     scenery<gems>::init(scene_lua);
     scenery<fade>::init(scene_lua);
+    lua_register(scene_lua, "set_start", do_reset?set_start:fake_set_start);
     lua_register(scene_lua, "load_map", load_map);
     lua_register(scene_lua, "quit",     quit_game);
     if (do_reset) reset(glm::dvec3(0, PLAYER_SIZE, 0));
@@ -128,10 +143,13 @@ void scene::interact() {
         scene::load(next);
         load_next_map = false;
     }
-    if (map_script_moddate != PHYSFS_getLastModTime(script_file)) {
-        scene::unload();
-        printf("Reloading %s\n", script_file);
-        do_load(script_file, false);
+    if (reload || CHECK_UPDATES) {
+        if (map_script_moddate != PHYSFS_getLastModTime(script_file)) {
+            scene::unload();
+            printf("Reloading %s\n", script_file);
+            do_load(script_file, false);
+        } 
+        reload = false;
     }
     if (lua_tick_function != LUA_REFNIL) {
         lua_rawgeti(scene_lua, LUA_REGISTRYINDEX, lua_tick_function);

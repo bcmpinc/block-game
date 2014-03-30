@@ -52,6 +52,7 @@ static std::vector<glm::dvec3> old_velocity;
 static double tau=0, phi=0;
 
 bool airborne = false;
+bool reload = false;
 glm::dvec3 ground_vel;
 bool quit  = false;
 glm::dmat3 orientation;
@@ -109,6 +110,9 @@ void handle_events() {
             switch (event.key.keysym.sym) {
                 case SDLK_ESCAPE:
                     quit = true;
+                    break;
+                case SDLK_F5:
+                    reload = true;
                     break;
                 case KEY_FORWARD:
                     button_state[button::FORWARD] = state;

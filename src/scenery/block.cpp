@@ -395,15 +395,17 @@ void scenery<blocks>::interact(lua_State*) {
             // Compute velocity of collision node
             glm::dvec3 cn_rel_pos = projected - c.position;
             glm::dvec3 cn_vel = c.velocity + c.rotational_velocity*cn_rel_pos - cn_rel_pos;
-            
-            // Change velocity to not be moving into the cube.
-            velocity -= dist*std::max(glm::dot(dist, velocity-cn_vel), 0.0);
-            
+                        
             // Walking?
             if (dist.y<-0.8) {
                 airborne = false;
+                velocity -= ground_vel;
                 ground_vel = cn_vel;
+                velocity += ground_vel;
             }
+
+            // Change velocity to not be moving into the cube.
+            velocity -= dist*std::max(glm::dot(dist, velocity-cn_vel), 0.0);
         }
     }
 }

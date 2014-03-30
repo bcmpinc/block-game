@@ -26,6 +26,7 @@ void reset(glm::dvec3 start_position);
 void finish(glm::dvec3 end_position, const char * target_file);
 
 extern bool quit;
+extern bool reload;
 extern bool airborne;
 extern glm::dvec3 ground_vel;
 extern glm::dmat3 orientation;

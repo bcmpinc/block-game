@@ -1,13 +1,13 @@
 -- A ferris wheel
 
 info = {
-  RADIUS   = 10,
-  HEIGHT   = 14,
+  RADIUS   = 20,
+  HEIGHT   = 26,
   WIDTH    =  8,
-  DEPTH    =  2,
-  AMOUNT   = 11,
-  VELOCITY =  2,
-  CARRIAGE_SIZE = 2,
+  DEPTH    =  3,
+  AMOUNT   = 15,
+  VELOCITY =  1,
+  CARRIAGE_SIZE = 3,
 };
 
 -- base
@@ -86,40 +86,43 @@ end
 
 -- cariage
 function feriswheel_cariages(info)
+  top = info.HEIGHT - info.RADIUS;
+  hinge = info.CARRIAGE_SIZE/16;
+  height = (top - hinge*12 - 0.7)/2;
+  offset = info.DEPTH-0.8;
   obj_list={};
+  tpi = math.pi * 2 / 3;
   for i = 0,info.AMOUNT-1 do
+    cr = math.random() * math.pi * 2;
+    col = math.rgb(0.7 + 0.3*math.cos(cr), 0.7 + 0.3*math.cos(cr+tpi), 0.7 + 0.3*math.cos(cr-tpi));
     block_list={};
-    top = info.HEIGHT - info.RADIUS;
-    hinge = info.CARRIAGE_SIZE/16;
-    height = (top - hinge*6 - 1.4)/2;
-    offset = info.DEPTH-0.8;
-    block = place_block({pos={0,0.6,0}, size={info.CARRIAGE_SIZE+0.1, 0.15, offset+0.1}, color=0x0000ff});
+    block = place_block({pos={0,0.6,0}, size={info.CARRIAGE_SIZE+0.1, 0.2, offset+0.1}, color=col});
     block_list[#block_list+1] = block;
-    block = place_block({pos={ info.CARRIAGE_SIZE,0.75+height, offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block = place_block({pos={ info.CARRIAGE_SIZE,0.8+height, offset}, size={0.1, height, 0.1}, color=col});
     block_list[#block_list+1] = block;
-    block = place_block({pos={ info.CARRIAGE_SIZE,0.75+height,-offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block = place_block({pos={ info.CARRIAGE_SIZE,0.8+height,-offset}, size={0.1, height, 0.1}, color=col});
     block_list[#block_list+1] = block;
-    block = place_block({pos={-info.CARRIAGE_SIZE,0.75+height, offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block = place_block({pos={-info.CARRIAGE_SIZE,0.8+height, offset}, size={0.1, height, 0.1}, color=col});
     block_list[#block_list+1] = block;
-    block = place_block({pos={-info.CARRIAGE_SIZE,0.75+height,-offset}, size={0.1, height, 0.1}, color=0x0000ff});
+    block = place_block({pos={-info.CARRIAGE_SIZE,0.8+height,-offset}, size={0.1, height, 0.1}, color=col});
     block_list[#block_list+1] = block;
     
-    block = place_block({pos={ info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=0x0000ff});
+    block = place_block({pos={ info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=col});
     block_list[#block_list+1] = block;
-    block = place_block({pos={-info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=0x0000ff});
+    block = place_block({pos={-info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=col});
     block_list[#block_list+1] = block;
     
     hinge_ang = math.deg(math.atan2(3,4));
-    block = place_block({pos={-hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    block = place_block({pos={-hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=col});
     rotate_block(block, {angle=hinge_ang, axis={0,0,1}, reset=1});
     block_list[#block_list+1] = block;
-    block = place_block({pos={-hinge*8,top-hinge*6,-offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    block = place_block({pos={-hinge*8,top-hinge*6,-offset}, size={hinge*10, 0.11, 0.11}, color=col});
     rotate_block(block, {angle=hinge_ang, axis={0,0,1}, reset=1});
     block_list[#block_list+1] = block;
-    block = place_block({pos={ hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    block = place_block({pos={ hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=col});
     rotate_block(block, {angle=-hinge_ang, axis={0,0,1}, reset=1});
     block_list[#block_list+1] = block;
-    block = place_block({pos={ hinge*8,top-hinge*6,-offset}, size={hinge*10, 0.11, 0.11}, color=0x0000ff});
+    block = place_block({pos={ hinge*8,top-hinge*6,-offset}, size={hinge*10, 0.11, 0.11}, color=col});
     rotate_block(block, {angle=-hinge_ang, axis={0,0,1}, reset=1});
     block_list[#block_list+1] = block;
     
@@ -147,3 +150,5 @@ function tick(n)
     update_object(carriage);
   end
 end
+
+set_start({0,0.8,0});

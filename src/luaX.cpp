@@ -64,10 +64,23 @@ static int math_hypot(lua_State * L) {
     return 1;
 }
 
+#define CLAMP(v) do {if (v<0) {v=0;} else if (v>255) {v=255;}} while(0)
+static int math_rgb(lua_State * L) {
+    luaL_argcheck(L, lua_isnumber(L, 1), 1, "Argument must be a number");
+    luaL_argcheck(L, lua_isnumber(L, 2), 2, "Argument must be a number");
+    luaL_argcheck(L, lua_isnumber(L, 3), 3, "Argument must be a number");
+    int r = round(lua_tonumber(L, 1)*255); CLAMP(r);
+    int g = round(lua_tonumber(L, 2)*255); CLAMP(g);
+    int b = round(lua_tonumber(L, 3)*255); CLAMP(b);
+    lua_pushnumber(L, r + (g<<8) + (b<<16));
+    return 1;
+}
 void luaX_open_math_ext(lua_State* L) 
 {
     lua_getglobal(L, "math");
     lua_pushcfunction(L, math_hypot);
     lua_setfield(L, 1, "hypot");
+    lua_pushcfunction(L, math_rgb);
+    lua_setfield(L, 1, "rgb");
     lua_pop(L,1);
 }
