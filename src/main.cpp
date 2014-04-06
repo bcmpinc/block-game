@@ -50,7 +50,7 @@ static bool select_paths() {
         return true;
     } 
     snprintf(path, 1023, "%s/../maps", p);
-    if (access("../maps", R_OK | X_OK) == 0) {
+    if (access(path, R_OK | X_OK) == 0) {
         snprintf(path, 1023, "%s/..", p);
         PHYSFS_mount(path, "/", 1);
         return true;
