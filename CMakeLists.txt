@@ -34,3 +34,4 @@ target_link_libraries(blockgame
 add_executable(map_convert 
     src/map_convert/map_convert.cpp
 )
+add_definitions("-DGLM_FORCE_RADIANS")

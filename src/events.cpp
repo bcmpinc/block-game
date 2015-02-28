@@ -167,7 +167,7 @@ void handle_events() {
     
     // Yaw camera
     glm::dmat4 view;
-    view = glm::rotate(view, tau*180/M_PI, glm::dvec3(0,1,0));
+    view = glm::rotate(view, tau, glm::dvec3(0,1,0));
     
     // Obtain current axes
     glm::dmat3 M = glm::transpose(glm::dmat3(view));
@@ -236,7 +236,7 @@ void handle_events() {
     }
     
     // Tilt camera
-    view = glm::rotate(view, phi*180/M_PI, M[0]);
+    view = glm::rotate(view, phi, M[0]);
     orientation = glm::dmat3(view);
 } 
 
