@@ -1,7 +1,7 @@
 for i = 0, 90, 5 do
   x = (i-45)/5
   block = place_block({pos={x,2,2}, size={0.5,0.1,2}, color=0xff0000});
-  rotate_block(block, {angle=-i, axis={1,0,0}})
+  rotate_block(block, {angle=math.rad(-i), axis={1,0,0}})
 end
 
 spin1 = place_block({pos={0,0.5,-3}, size={0.1,0.5,1}, color=0x0000ff});
@@ -11,9 +11,9 @@ spin3 = place_block({pos={-3,0.02,-3}, size={1,0.1,1}, color=0x0000ff});
 move1 = place_block({pos={3,0,-3}, size={1,0.1,1}, color=0x00ff00});
 move2 = place_block({pos={6,0,-3}, size={1,0.1,1}, color=0x00ff00});
 
-rotate_block(spin1, {angle_vel=1, reset=1});
-rotate_block(spin2, {angle_vel=1, axis={1,0,0}, reset=1});
-rotate_block(spin3, {angle_vel=1, reset=1});
+rotate_block(spin1, {angle_vel=0.02, reset=1});
+rotate_block(spin2, {angle_vel=0.02, axis={1,0,0}, reset=1});
+rotate_block(spin3, {angle_vel=0.02, reset=1});
 move_block(move1, {vel={0,1/10,0}});
 move_block(move2, {vel={0,1/5,0}});
 
@@ -23,9 +23,9 @@ place_block({pos={6,20,0}, size={1,0.1,1}, color=0xff0000});
 place_block({pos={6,20,-6}, size={1,0.1,1}, color=0xff0000});
 
 function tick(frame)
-    rotate_block(spin1, {angle=frame, reset=1});
-    rotate_block(spin2, {angle=frame, axis={1,0,0}, reset=1});
-    rotate_block(spin3, {angle=frame, reset=1});
+    rotate_block(spin1, {angle=math.rad(frame), reset=1});
+    rotate_block(spin2, {angle=math.rad(frame), axis={1,0,0}, reset=1});
+    rotate_block(spin3, {angle=math.rad(frame), reset=1});
     move_block(move1, {pos={3,(frame % 100)/10,-3}});
     move_block(move2, {pos={6,(frame % 100)/5,-3}});
 end

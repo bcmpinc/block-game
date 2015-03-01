@@ -6,7 +6,7 @@ info = {
   WIDTH    =  8,
   DEPTH    =  3,
   AMOUNT   = 15,
-  VELOCITY =  1,
+  VELOCITY =  0.01,
   CARRIAGE_SIZE = 3,
 };
 
@@ -22,7 +22,7 @@ function feriswheel_base(info)
   offset = info.DEPTH-0.12;
   block1 = place_block({pos={ side_width/2,info.HEIGHT/2+0.2,offset}, size={0.2,side_length,0.1}, color=0x606060});
   block2 = place_block({pos={-side_width/2,info.HEIGHT/2+0.2,offset}, size={0.2,side_length,0.1}, color=0x606060});
-  side_angle = math.deg(math.atan2(side_width, info.HEIGHT-0.1));
+  side_angle = math.atan2(side_width, info.HEIGHT-0.1);
   rotate_block(block1, {angle=side_angle, axis={0,0,1}});
   rotate_block(block2, {angle=-side_angle, axis={0,0,1}});
   place_block({pos={0,info.HEIGHT/2+0.2,offset}, size={side_width/2,0.2,0.08}, color=0x606060});
@@ -30,52 +30,53 @@ function feriswheel_base(info)
 
   block1 = place_block({pos={ side_width/2,info.HEIGHT/2+0.2,-offset}, size={0.2,side_length,0.1}, color=0x606060});
   block2 = place_block({pos={-side_width/2,info.HEIGHT/2+0.2,-offset}, size={0.2,side_length,0.1}, color=0x606060});
-  side_angle = math.deg(math.atan2(side_width, info.HEIGHT-0.1));
+  side_angle = math.atan2(side_width, info.HEIGHT-0.1);
   rotate_block(block1, {angle=side_angle, axis={0,0,1}});
   rotate_block(block2, {angle=-side_angle, axis={0,0,1}});
   place_block({pos={0,info.HEIGHT/2+0.2,-offset}, size={side_width/2,0.2,0.08}, color=0x606060});
   place_block({pos={0,info.HEIGHT,-offset}, size={1,1,0.12}, color=0x9090ff});
   
   motor = place_block({pos={0,info.HEIGHT,0}, size={0.2,0.2,info.DEPTH-0.24}, color=0x606060});
-  rotate_block(motor, {angle=45, axis={0,0,1}});
+  rotate_block(motor, {angle=math.pi/4, axis={0,0,1}});
 end
 
 -- wheel
 function feriswheel_wheel(info)
   radius = info.RADIUS/2;
   offset = info.DEPTH-0.5;
-  hang = 180/info.AMOUNT;
-  side_length = radius*math.sin(math.rad(hang));
-  side_radius = radius*math.cos(math.rad(hang));
+  hang = math.pi/info.AMOUNT;
+  side_length = radius*math.sin(hang);
+  side_radius = radius*math.cos(hang);
   block_list={};
+  qpi = math.pi/4;
   for i = 0,info.AMOUNT-1 do
-    ang = -90+360*i/info.AMOUNT;
-    x = math.cos(math.rad(ang)) * radius;
-    y = math.sin(math.rad(ang)) * radius + info.HEIGHT;
-    ex = math.cos(math.rad(ang)) * info.RADIUS;
-    ey = math.sin(math.rad(ang)) * info.RADIUS + info.HEIGHT;
-    sx = math.cos(math.rad(ang+hang)) * side_radius;
-    sy = math.sin(math.rad(ang+hang)) * side_radius + info.HEIGHT;
+    ang = -math.pi/2+math.pi*2*i/info.AMOUNT;
+    x = math.cos(ang) * radius;
+    y = math.sin(ang) * radius + info.HEIGHT;
+    ex = math.cos(ang) * info.RADIUS;
+    ey = math.sin(ang) * info.RADIUS + info.HEIGHT;
+    sx = math.cos(ang+hang) * side_radius;
+    sy = math.sin(ang+hang) * side_radius + info.HEIGHT;
     block = place_block({pos={x,y,offset}, size={radius,0.1,0.1}, color=0xffffff});
-    rotate_block(block, {angle=45, axis={1,0,0}});
+    rotate_block(block, {angle=qpi, axis={1,0,0}});
     rotate_block(block, {angle=ang, axis={0,0,1}});
     block_list[#block_list+1] = block;
     block = place_block({pos={x,y,-offset}, size={radius,0.1,0.1}, color=0xffffff});
-    rotate_block(block, {angle=45, axis={1,0,0}});
+    rotate_block(block, {angle=qpi, axis={1,0,0}});
     rotate_block(block, {angle=ang, axis={0,0,1}});
     block_list[#block_list+1] = block;
     block = place_block({pos={x,y,0}, size={0.1,0.1,offset}, color=0xffffff});
-    rotate_block(block, {angle=ang+45, axis={0,0,1}});
+    rotate_block(block, {angle=ang+qpi, axis={0,0,1}});
     block_list[#block_list+1] = block;
     block = place_block({pos={ex,ey,0}, size={0.1,0.1,offset}, color=0xffffff});
-    rotate_block(block, {angle=ang+45, axis={0,0,1}});
+    rotate_block(block, {angle=ang+qpi, axis={0,0,1}});
     block_list[#block_list+1] = block;
     block = place_block({pos={sx,sy,offset}, size={0.1,side_length,0.1}, color=0xffffff});
-    rotate_block(block, {angle=45, axis={0,1,0}});
+    rotate_block(block, {angle=qpi, axis={0,1,0}});
     rotate_block(block, {angle=ang+hang, axis={0,0,1}});
     block_list[#block_list+1] = block;
     block = place_block({pos={sx,sy,-offset}, size={0.1,side_length,0.1}, color=0xffffff});
-    rotate_block(block, {angle=45, axis={0,1,0}});
+    rotate_block(block, {angle=qpi, axis={0,1,0}});
     rotate_block(block, {angle=ang+hang, axis={0,0,1}});
     block_list[#block_list+1] = block;
   end
@@ -112,7 +113,7 @@ function feriswheel_cariages(info)
     block = place_block({pos={-info.CARRIAGE_SIZE,0.6+height*2,0}, size={0.1, 0.15, offset-0.1}, color=col});
     block_list[#block_list+1] = block;
     
-    hinge_ang = math.deg(math.atan2(3,4));
+    hinge_ang = math.atan2(3,4);
     block = place_block({pos={-hinge*8,top-hinge*6, offset}, size={hinge*10, 0.11, 0.11}, color=col});
     rotate_block(block, {angle=hinge_ang, axis={0,0,1}, reset=1});
     block_list[#block_list+1] = block;
@@ -140,11 +141,11 @@ function tick(n)
   rotate_object(wheel, {angle=n*info.VELOCITY, axis={0,0,1}, reset=1});
   update_object(wheel);
   for i = 0,info.AMOUNT-1 do
-    ang = -90+360*i/info.AMOUNT + n*info.VELOCITY;
-    ex = math.cos(math.rad(ang)) * info.RADIUS;
-    ey = math.sin(math.rad(ang)) * info.RADIUS + info.RADIUS;
-    fx = math.cos(math.rad(ang + info.VELOCITY)) * info.RADIUS;
-    fy = math.sin(math.rad(ang + info.VELOCITY)) * info.RADIUS + info.RADIUS;
+    ang = -math.pi/2+math.pi*2*i/info.AMOUNT + n*info.VELOCITY;
+    ex = math.cos(ang) * info.RADIUS;
+    ey = math.sin(ang) * info.RADIUS + info.RADIUS;
+    fx = math.cos(ang + info.VELOCITY) * info.RADIUS;
+    fy = math.sin(ang + info.VELOCITY) * info.RADIUS + info.RADIUS;
     carriage = carriages[i+1];
     move_object(carriage, {offset={ex,ey,0}, acceleration={fx-ex,fy-ey,0}, reset=1});
     update_object(carriage);
