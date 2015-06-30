@@ -97,7 +97,8 @@ static bool do_load(const char* filename, bool do_reset) {
     strncpy(script_file, filename, 255);
     assert(scene_lua == NULL);
     scene_lua = luaL_newstate();
-    luaopen_math(scene_lua);
+    luaL_requiref(scene_lua, "math", luaopen_math, true);
+    lua_pop(scene_lua,1);
     luaX_open_math_ext(scene_lua);
     scenery<grid>::init(scene_lua);
     scenery<blocks>::init(scene_lua);

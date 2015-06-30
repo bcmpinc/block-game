@@ -216,7 +216,7 @@ int create_object(lua_State* L) {
     objects.resize(objects.size()+1);
     object & obj = objects.back();
     
-    int n = luaL_getn(L, 1); // Should be luaL_objlen
+    int n = luaL_len(L, 1); 
     if (lua_gettop(L) >= 2) {
         lua_settop(L,2);
         obj.base_offset = obj.offset = luaX_get_vector(L);

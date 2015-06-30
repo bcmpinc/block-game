@@ -37,7 +37,7 @@ bool luaX_execute_script(lua_State * L, const char * physfs_filename)
         PHYSFS_close(script);
         return false;
     }
-    int err = lua_load(L, read_physfs_file, script, physfs_filename);
+    int err = lua_load(L, read_physfs_file, script, physfs_filename, NULL);
     if (err) {
         fprintf(stderr, "Failed to parse '%s': %s\n", physfs_filename, lua_tolstring(L, -1, NULL));
         PHYSFS_close(script);

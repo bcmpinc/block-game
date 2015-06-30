@@ -118,7 +118,7 @@ int main(int argc, const char ** argv) {
             out << pb << std::endl;
         } else {
             if (rotation>0.1 && rotation<179.9) {
-                out << "block = " << pb << "; rotate_block(block, {angle=" << num(rotation) << "})" << std::endl;
+                out << "block = " << pb << "; rotate_block(block, {angle=math.rad(" << num(rotation) << ")})" << std::endl;
             } else {
                 out << pb << std::endl;
             }
