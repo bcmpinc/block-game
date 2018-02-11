@@ -7,10 +7,11 @@ The goal is to get to the crystal as fast as possible. The game records how you 
 
 Dependencies
 ------------
-This game requires the following lobraries.
+This game requires the following libraries.
 * GLM
 * OpenGL
 * SDL
+* Lua
 
 Building and running the game
 -----------------------------
@@ -22,7 +23,7 @@ Execute the following commands:
     make
     ./blockgame
 
-When starting the game ou can also specify the level you want to start with, for example: `./blockgame 5`.
+When starting the game you can also specify the level you want to start with, for example: `./blockgame 5`.
 
 Note: while you can use a different directory to build and run from, the binary expects to find the maps in `../maps/`.
     
