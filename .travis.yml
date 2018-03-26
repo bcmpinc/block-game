@@ -1,0 +1,22 @@
+language: cpp
+script: 
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=${TARGET} ..
+  - make
+  
+matrix:
+  include:
+    - env: TARGET=Debug
+    - env: TARGET=Release
+
+addons:
+  apt:
+    packages:
+      - cmake
+      - libglm-dev
+      - libgl1-mesa-dev
+      - libsdl-dev 
+      - liblua5.3-dev
+      - libphysfs-dev
+      

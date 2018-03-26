@@ -1,6 +1,5 @@
 block-game
 ==========
-
 A minimalistic 3D platform game.
 
 The goal is to get to the crystal as fast as possible. The game records how you play, such that the second time you have someone to race against.
@@ -11,7 +10,8 @@ This game requires the following libraries.
 * GLM
 * OpenGL
 * SDL
-* Lua
+* Lua 5.3
+* PhysFS
 
 Building and running the game
 -----------------------------

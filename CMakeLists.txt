@@ -4,7 +4,7 @@ project(Blockgame)
 # REQUIRED does not work in CMake <=2.4.6 for SDL
 find_package(SDL REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(Lua REQUIRED)
+find_package(Lua REQUIRED 5.3)
 find_package(PhysFS REQUIRED)
 
 include_directories(${SDL_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
