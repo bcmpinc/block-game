@@ -16,7 +16,7 @@ addons:
       - cmake
       - libglm-dev
       - libgl1-mesa-dev
-      - libsdl-dev 
-      - liblua5.3-dev
+      - libsdl1.2-dev 
+      - liblua5.2-dev
       - libphysfs-dev
       

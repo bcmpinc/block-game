@@ -9,8 +9,8 @@ Dependencies
 This game requires the following libraries.
 * GLM
 * OpenGL
-* SDL
-* Lua 5.3
+* SDL 1.2
+* Lua 5.2 or 5.3
 * PhysFS
 
 Building and running the game
