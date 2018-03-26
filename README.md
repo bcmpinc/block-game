@@ -2,6 +2,11 @@ block-game
 ==========
 A minimalistic 3D platform game.
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7aa2955514134347a9c5d1b8cc39b505)](https://www.codacy.com/app/bcmpinc/block-game?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bcmpinc/block-game&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/bcmpinc/block-game.svg?branch=master)](https://travis-ci.org/bcmpinc/block-game)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+
 The goal is to get to the crystal as fast as possible. The game records how you play, such that the second time you have someone to race against.
 
 Dependencies
